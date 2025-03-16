@@ -1,39 +1,48 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
-import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
-import 'react-native-reanimated';
+import { useEffect, useState } from 'react';
+import { Slot, useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import SplashScreen from '@/components/SplashScreen';
 
-import { useColorScheme } from '@/hooks/useColorScheme';
-
-// Prevent the splash screen from auto-hiding before asset loading is complete.
-SplashScreen.preventAutoHideAsync();
-
-export default function RootLayout() {
-  const colorScheme = useColorScheme();
-  const [loaded] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
-  });
+export default function Layout() {
+  const [isFirstLaunch, setIsFirstLaunch] = useState<boolean | null>(null);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
-    if (loaded) {
-      SplashScreen.hideAsync();
+    async function checkFirstLaunch() {
+      const value = await AsyncStorage.getItem('alreadyLaunched');
+      if (value === null) {
+        await AsyncStorage.setItem('alreadyLaunched', 'true');
+        setIsFirstLaunch(true);
+      } else {
+        setIsFirstLaunch(false);
+      }
     }
-  }, [loaded]);
 
-  if (!loaded) {
+    checkFirstLaunch();
+  }, []);
+
+  useEffect(() => {
+    const timeout = setTimeout(() => setLoading(false), 2000); // Giả lập splash 2s
+    return () => clearTimeout(timeout);
+  }, []);
+
+  if (loading) {
+    return <SplashScreen />;
+  }
+
+  if (isFirstLaunch === null) {
+    return null; // Chờ kiểm tra AsyncStorage
+  }
+
+  if (isFirstLaunch) {
+    setTimeout(() => {
+      if (router.canGoBack()) {
+        router.replace('/onboarding');
+      }
+    }, 100); // Đợi một chút để đảm bảo Root Layout được mount
     return null;
   }
 
-  return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
-  );
+  return <Slot />;
 }

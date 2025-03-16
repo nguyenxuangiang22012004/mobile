@@ -1,109 +1,128 @@
-import { StyleSheet, Image, Platform } from 'react-native';
+import React from 'react';
+import { View, Text, Image, StyleSheet, ScrollView, TouchableOpacity, Button } from 'react-native';
+import { useRouter } from 'expo-router';
 
-import { Collapsible } from '@/components/Collapsible';
-import { ExternalLink } from '@/components/ExternalLink';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
-import { IconSymbol } from '@/components/ui/IconSymbol';
+const beverages = [
+  {
+    name: 'Diet Coke',
+    size: '355ml',
+    price: '$1.99',
+    image: 'https://storage.googleapis.com/a1aa/image/VKNRu1bEbHVYjFNhnMxGUrY_itGG6F5mYc7BnccB4T4.jpg',
+  },
+  {
+    name: 'Sprite Can',
+    size: '325ml',
+    price: '$1.50',
+    image: 'https://storage.googleapis.com/a1aa/image/rbAkPhnEovyC2KhlzfldixhDLO5esUHydvycxx5Nh9s.jpg',
+  },
+  {
+    name: 'Apple & Grape Juice',
+    size: '2L',
+    price: '$15.99',
+    image: 'https://storage.googleapis.com/a1aa/image/ycwpxrdx_mCLzhalTTaTbroyHGCJgXsP96AUugsLhB8.jpg',
+  },
+  {
+    name: 'Orange Juice',
+    size: '2L',
+    price: '$15.99',
+    image: 'https://storage.googleapis.com/a1aa/image/2lEaTkN_ty0HxbpdOE0KwTLWd6AQ3-E0reQOCpLcylU.jpg',
+  },
+  {
+    name: 'Coca Cola Can',
+    size: '325ml',
+    price: '$4.99',
+    image: 'https://storage.googleapis.com/a1aa/image/m3-QH6deP0ESPIpTWz7mpiucPNcXHdnlcmUUVk1n37U.jpg',
+  },
+  {
+    name: 'Pepsi Can',
+    size: '330ml',
+    price: '$4.99',
+    image: 'https://storage.googleapis.com/a1aa/image/aatlLc1BNRqU4hcdffp_keZ8FGIWdDfaTHIOLNHwNEI.jpg',
+  },
+];
 
-export default function TabTwoScreen() {
+export default function ExploreScreen() {
+  const router = useRouter();
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
-      headerImage={
-        <IconSymbol
-          size={310}
-          color="#808080"
-          name="chevron.left.forwardslash.chevron.right"
-          style={styles.headerImage}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Explore</ThemedText>
-      </ThemedView>
-      <ThemedText>This app includes example code to help you get started.</ThemedText>
-      <Collapsible title="File-based routing">
-        <ThemedText>
-          This app has two screens:{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/explore.tsx</ThemedText>
-        </ThemedText>
-        <ThemedText>
-          The layout file in <ThemedText type="defaultSemiBold">app/(tabs)/_layout.tsx</ThemedText>{' '}
-          sets up the tab navigator.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/router/introduction">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Android, iOS, and web support">
-        <ThemedText>
-          You can open this project on Android, iOS, and the web. To open the web version, press{' '}
-          <ThemedText type="defaultSemiBold">w</ThemedText> in the terminal running this project.
-        </ThemedText>
-      </Collapsible>
-      <Collapsible title="Images">
-        <ThemedText>
-          For static images, you can use the <ThemedText type="defaultSemiBold">@2x</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">@3x</ThemedText> suffixes to provide files for
-          different screen densities
-        </ThemedText>
-        <Image source={require('@/assets/images/react-logo.png')} style={{ alignSelf: 'center' }} />
-        <ExternalLink href="https://reactnative.dev/docs/images">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Custom fonts">
-        <ThemedText>
-          Open <ThemedText type="defaultSemiBold">app/_layout.tsx</ThemedText> to see how to load{' '}
-          <ThemedText style={{ fontFamily: 'SpaceMono' }}>
-            custom fonts such as this one.
-          </ThemedText>
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/versions/latest/sdk/font">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Light and dark mode components">
-        <ThemedText>
-          This template has light and dark mode support. The{' '}
-          <ThemedText type="defaultSemiBold">useColorScheme()</ThemedText> hook lets you inspect
-          what the user's current color scheme is, and so you can adjust UI colors accordingly.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Animations">
-        <ThemedText>
-          This template includes an example of an animated component. The{' '}
-          <ThemedText type="defaultSemiBold">components/HelloWave.tsx</ThemedText> component uses
-          the powerful <ThemedText type="defaultSemiBold">react-native-reanimated</ThemedText>{' '}
-          library to create a waving hand animation.
-        </ThemedText>
-        {Platform.select({
-          ios: (
-            <ThemedText>
-              The <ThemedText type="defaultSemiBold">components/ParallaxScrollView.tsx</ThemedText>{' '}
-              component provides a parallax effect for the header image.
-            </ThemedText>
-          ),
-        })}
-      </Collapsible>
-    </ParallaxScrollView>
+    <ScrollView style={styles.container}>
+      <Text style={styles.headerTitle}>Explore Screen</Text>
+      <Button title="Back to Home" onPress={() => router.push('/')} />
+      <Text style={styles.headerTitle}>Beverages</Text>
+      <View style={styles.grid}>
+        {beverages.map((beverage, index) => (
+          <View key={index} style={styles.card}>
+            <Image source={{ uri: beverage.image }} style={styles.image} />
+            <Text style={styles.name}>{beverage.name}</Text>
+            <Text style={styles.size}>{beverage.size}</Text>
+            <View style={styles.footer}>
+              <Text style={styles.price}>{beverage.price}</Text>
+              <TouchableOpacity style={styles.addButton}>
+                <Text style={{ color: 'white' }}>+</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        ))}
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  headerImage: {
-    color: '#808080',
-    bottom: -90,
-    left: -35,
-    position: 'absolute',
+  container: {
+    flex: 1,
+    backgroundColor: '#f3f4f6',
+    padding: 16,
   },
-  titleContainer: {
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  grid: {
     flexDirection: 'row',
-    gap: 8,
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    padding: 16,
+    marginBottom: 16,
+    width: '48%',
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 5 },
+  },
+  image: {
+    width: '100%',
+    height: 100,
+    resizeMode: 'contain',
+    marginBottom: 8,
+  },
+  name: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  size: {
+    color: '#6b7280',
+    fontSize: 12,
+  },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  price: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  addButton: {
+    backgroundColor: '#10b981',
+    borderRadius: 50,
+    padding: 8,
   },
 });
