@@ -9,8 +9,8 @@ import {
   StyleSheet,
 } from 'react-native';
 import { Ionicons, FontAwesome, FontAwesome5 } from '@expo/vector-icons';
-
-const App = () => {
+type Props = {};
+const App = (props: Props) => {
   return (
     <ScrollView style={styles.container}>
       {/* Header */}

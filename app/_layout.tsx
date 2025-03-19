@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Slot, useRouter } from 'expo-router';
+import { Stack, useRouter, Slot } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import SplashScreen from '@/components/SplashScreen';
 
@@ -37,12 +37,16 @@ export default function Layout() {
 
   if (isFirstLaunch) {
     setTimeout(() => {
-      if (router.canGoBack()) {
-        router.replace('/onboarding');
-      }
-    }, 100); // Đợi một chút để đảm bảo Root Layout được mount
+      router.replace('/onboarding');
+    }, 100);
     return null;
   }
 
-  return <Slot />;
+  return (
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="signin" />
+      <Stack.Screen name="signup" />
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+    </Stack>
+  );
 }
