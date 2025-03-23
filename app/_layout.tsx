@@ -44,9 +44,11 @@ export default function Layout() {
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="index" />
       <Stack.Screen name="signin" />
       <Stack.Screen name="signup" />
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="productdetail" />
+      <Stack.Screen name="category" />
     </Stack>
   );
 }

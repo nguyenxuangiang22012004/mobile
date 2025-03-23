@@ -9,8 +9,10 @@ import {
   StyleSheet,
 } from 'react-native';
 import { Ionicons, FontAwesome, FontAwesome5 } from '@expo/vector-icons';
+import { useRouter } from "expo-router";
 type Props = {};
 const App = (props: Props) => {
+
   return (
     <ScrollView style={styles.container}>
       {/* Header */}
@@ -58,11 +60,21 @@ const App = (props: Props) => {
     </ScrollView>
   );
 };
+const imageMap: Record<string, any> = {
+  "Organic Bananas": require("../../assets/images/banana.png"),
+  "Red Apple": require("../../assets/images/apple.png"),
+  "Bell Pepper Red": require("../../assets/images/bell_pepper.png"),
+  "Ginger": require("../../assets/images/ginger.png"),
+  "Beef Bone": require("../../assets/images/beefBone.png"),
+  "Broiler Chicken": require("../../assets/images/boiler_chicken.png"),
+};
 
 const renderSection = (
   title: string,
+
   items: { title: string; subtitle: string; price: string; image: any }[]
 ) => {
+  const router = useRouter(); // Lấy đối tượng router
   return (
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
@@ -76,7 +88,21 @@ const renderSection = (
       <ScrollView horizontal={true} showsHorizontalScrollIndicator={false}>
         <View style={styles.cardContainer}>
           {items.map((item, index) => (
-            <View key={index} style={styles.card}>
+            <TouchableOpacity
+              key={index}
+              style={styles.card}
+              onPress={() =>
+                router.push({
+                  pathname: "/productdetail",
+                  params: {
+                    title: item.title,
+                    price: item.price,
+                    image: item.title,
+                    subtitle: item.subtitle,
+                  },
+                })
+              }
+            >
               <Image source={item.image} style={styles.cardImage} />
               <Text style={styles.cardTitle}>{item.title}</Text>
               <Text style={styles.cardSubtitle}>{item.subtitle}</Text>
@@ -86,7 +112,7 @@ const renderSection = (
                   <Ionicons name="add" size={20} color="white" />
                 </TouchableOpacity>
               </View>
-            </View>
+            </TouchableOpacity>
           ))}
         </View>
       </ScrollView>

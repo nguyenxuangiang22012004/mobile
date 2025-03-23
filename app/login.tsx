@@ -62,10 +62,12 @@ export default function SignInScreen() {
             </TouchableOpacity>
 
             {/* Login Button */}
-            <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-                <Text style={styles.loginButtonText}>Log In</Text>
-            </TouchableOpacity>
-
+            <Link href="/(tabs)" asChild>
+                <TouchableOpacity style={styles.loginButton} onPress={() => router.push('/(tabs)')} >
+                    <Text style={styles.loginButtonText}>Log In</Text>
+                </TouchableOpacity>
+            </Link>
+            {/* onPress={handleLogin}*/}
             {/* Signup */}
             <Text style={styles.signupText}>
                 Don’t have an account?{" "}

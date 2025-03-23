@@ -18,7 +18,7 @@ const SignUpScreen: React.FC = () => {
                 {/* Logo */}
                 <View style={styles.logoContainer}>
                     <View>
-                        <FontAwesome5 name="carrot" size={24} color="orange" />
+                        <FontAwesome5 name="carrot" size={50} color="orange" />
                     </View>
                 </View>
 
@@ -79,7 +79,7 @@ const SignUpScreen: React.FC = () => {
                 {/* Already have an account? */}
                 <Link href="/login" asChild>
                     <TouchableOpacity onPress={() => router.push('/login')}>
-                        <Text style={styles.footerText}>Already have an account? Log In</Text>
+                        <Text style={styles.footerText}>Already have an account? <Text style={styles.loginText}>Log In</Text></Text>
                     </TouchableOpacity>
                 </Link>
             </ScrollView>
@@ -94,16 +94,30 @@ const styles = StyleSheet.create({
     logo: { width: 50, height: 50 },
     title: { fontSize: 24, fontWeight: '600', textAlign: 'center', marginBottom: 8 },
     subtitle: { textAlign: 'center', color: 'gray', marginBottom: 24 },
-    inputContainer: { marginBottom: 16 },
+    inputContainer: { width: "100%", marginBottom: 15 },
     label: { fontSize: 14, color: 'gray', marginBottom: 4 },
-    input: { borderWidth: 1, borderColor: 'gray', borderRadius: 8, padding: 12, fontSize: 16 },
+    input: {
+        width: "100%",
+        padding: 10,
+        borderBottomWidth: 1,
+        borderBottomColor: "gray",
+        backgroundColor: "#FFF",
+    },
     inputWrapper: { position: 'relative' },
     icon: { position: 'absolute', right: 12, top: '50%', transform: [{ translateY: -10 }] },
     termsText: { fontSize: 12, color: 'gray', marginBottom: 24, textAlign: 'center' },
     link: { color: 'green' },
-    button: { backgroundColor: 'green', paddingVertical: 12, borderRadius: 8, alignItems: 'center' },
-    buttonText: { color: 'white', fontSize: 16, fontWeight: '600' },
-    footerText: { textAlign: 'center', color: 'gray', marginTop: 24 }
+    button: {
+        width: "100%",
+        padding: 15,
+        backgroundColor: "#53B175",
+        borderRadius: 25,
+        alignItems: "center",
+        marginBottom: 20,
+    },
+    buttonText: { color: 'white', fontSize: 16, fontWeight: '600', },
+    footerText: { textAlign: 'center', color: 'gray', marginTop: 24 },
+    loginText: { fontSize: 14, color: "black" },
 });
 
 export default SignUpScreen;

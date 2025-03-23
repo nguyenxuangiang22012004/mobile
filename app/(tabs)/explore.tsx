@@ -1,128 +1,95 @@
 import React from 'react';
-import { View, Text, Image, StyleSheet, ScrollView, TouchableOpacity, Button } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  Image,
+  TouchableOpacity,
+  StyleSheet,
+  ScrollView,
+} from 'react-native';
+import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-
-const beverages = [
-  {
-    name: 'Diet Coke',
-    size: '355ml',
-    price: '$1.99',
-    image: 'https://storage.googleapis.com/a1aa/image/VKNRu1bEbHVYjFNhnMxGUrY_itGG6F5mYc7BnccB4T4.jpg',
-  },
-  {
-    name: 'Sprite Can',
-    size: '325ml',
-    price: '$1.50',
-    image: 'https://storage.googleapis.com/a1aa/image/rbAkPhnEovyC2KhlzfldixhDLO5esUHydvycxx5Nh9s.jpg',
-  },
-  {
-    name: 'Apple & Grape Juice',
-    size: '2L',
-    price: '$15.99',
-    image: 'https://storage.googleapis.com/a1aa/image/ycwpxrdx_mCLzhalTTaTbroyHGCJgXsP96AUugsLhB8.jpg',
-  },
-  {
-    name: 'Orange Juice',
-    size: '2L',
-    price: '$15.99',
-    image: 'https://storage.googleapis.com/a1aa/image/2lEaTkN_ty0HxbpdOE0KwTLWd6AQ3-E0reQOCpLcylU.jpg',
-  },
-  {
-    name: 'Coca Cola Can',
-    size: '325ml',
-    price: '$4.99',
-    image: 'https://storage.googleapis.com/a1aa/image/m3-QH6deP0ESPIpTWz7mpiucPNcXHdnlcmUUVk1n37U.jpg',
-  },
-  {
-    name: 'Pepsi Can',
-    size: '330ml',
-    price: '$4.99',
-    image: 'https://storage.googleapis.com/a1aa/image/aatlLc1BNRqU4hcdffp_keZ8FGIWdDfaTHIOLNHwNEI.jpg',
-  },
-];
-
-export default function ExploreScreen() {
+const App = () => {
   const router = useRouter();
 
+  const categories = [
+    { title: "Frash Fruits & Vegetable", image: require("../../assets/images/frashfruit.png") },
+    { title: "Cooking Oil & Ghee", image: require("../../assets/images/cookingoil.png") },
+    { title: "Meat & Fish", image: require("../../assets/images/meatfish.png") },
+    { title: "Bakery & Snacks", image: require("../../assets/images/baketysnack.png") },
+    { title: "Dairy & Eggs", image: require("../../assets/images/eggs.png") },
+    { title: "Beverages", image: require("../../assets/images/nuocngot.png") },
+  ];
+
+  const colors = ["#53B175", "#F8A44C", "#F7A593", "#D3B0E0", "#FDE598", "#B7DFF5"];
+
+
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.headerTitle}>Explore Screen</Text>
-      <Button title="Back to Home" onPress={() => router.push('/')} />
-      <Text style={styles.headerTitle}>Beverages</Text>
-      <View style={styles.grid}>
-        {beverages.map((beverage, index) => (
-          <View key={index} style={styles.card}>
-            <Image source={{ uri: beverage.image }} style={styles.image} />
-            <Text style={styles.name}>{beverage.name}</Text>
-            <Text style={styles.size}>{beverage.size}</Text>
-            <View style={styles.footer}>
-              <Text style={styles.price}>{beverage.price}</Text>
-              <TouchableOpacity style={styles.addButton}>
-                <Text style={{ color: 'white' }}>+</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        ))}
+    <View style={styles.container}>
+      {/* Header */}
+      <Text style={styles.header}>Find Products</Text>
+
+      {/* Search Bar */}
+      <View style={styles.searchContainer}>
+        <FontAwesome name="search" size={20} color="gray" style={styles.searchIcon} />
+        <TextInput placeholder="Search Store" style={styles.searchInput} />
       </View>
-    </ScrollView>
+
+      {/* Product Categories */}
+      <ScrollView contentContainerStyle={styles.grid}>
+        {categories.map((item, index) => {
+          const backgroundColor = colors[index % colors.length] + "55"; // Giảm độ sáng
+          return (
+            <TouchableOpacity
+              key={index}
+              style={[styles.card, { backgroundColor, borderColor: colors[index % colors.length] }]}
+              onPress={() => router.push(`/category?title=${encodeURIComponent(item.title)}`)}
+            >
+              <Image source={item.image} style={styles.image} />
+              <Text style={styles.cardText}>{item.title}</Text>
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f3f4f6',
-    padding: 16,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  grid: {
+  container: { flex: 1, backgroundColor: 'white', padding: 16 },
+  header: { textAlign: 'center', fontSize: 20, fontWeight: '600', marginBottom: 16 },
+  searchContainer: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#F3F4F6',
+    borderRadius: 25,
+    paddingHorizontal: 16,
+    marginBottom: 24,
   },
+  searchIcon: { marginRight: 8 },
+  searchInput: { flex: 1, height: 40 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
   card: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    padding: 16,
-    marginBottom: 16,
     width: '48%',
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 5 },
+    alignItems: 'center',
+    padding: 16,
+    borderWidth: 2,
+    borderRadius: 12,
+    marginBottom: 16,
   },
-  image: {
-    width: '100%',
-    height: 100,
-    resizeMode: 'contain',
-    marginBottom: 8,
-  },
-  name: {
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  size: {
-    color: '#6b7280',
-    fontSize: 12,
-  },
+  image: { width: 100, height: 100, marginBottom: 8 },
+  cardText: { textAlign: 'center', fontSize: 14, fontWeight: '500' },
   footer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 8,
+    justifyContent: 'space-around',
+    paddingVertical: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
+    backgroundColor: 'white',
   },
-  price: {
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  addButton: {
-    backgroundColor: '#10b981',
-    borderRadius: 50,
-    padding: 8,
-  },
+  footerItem: { alignItems: 'center' },
+  footerText: { fontSize: 12, marginTop: 4 },
 });
+
+export default App;
