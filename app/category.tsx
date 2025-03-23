@@ -40,6 +40,7 @@ const CategoryScreen = () => {
             <View style={styles.titleicon}>
                 <AntDesign name="left" size={24} color="black" />
                 <Text style={styles.header}>{categoryTitle}</Text>
+                <AntDesign name="right" size={24} color="black" />
             </View>
             <FlatList
                 data={categoryProducts}
