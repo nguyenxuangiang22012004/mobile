@@ -90,18 +90,10 @@ const App: React.FC<Props> = () => {
       {/* Header */}
       <View style={styles.header}>
         <View>
-          <FontAwesome5 name="carrot" size={24} color="orange" />
+          <FontAwesome5 name="carrot" size={40} color="orange" />
         </View>
+        <Text style={styles.textHeader}>Store Groceries</Text>
 
-      </View>
-
-      {/* Banner */}
-      <View style={styles.bannerContainer}>
-        <Image source={require('../../assets/images/freshVegetable.png')} style={styles.bannerImage} />
-        <View style={styles.bannerOverlay}>
-          <Text style={styles.bannerTitle}>Fresh Vegetables</Text>
-          <Text style={styles.bannerSubtitle}>Get Up To 40% OFF</Text>
-        </View>
       </View>
 
       {/* Sections */}
@@ -134,6 +126,10 @@ const imageMap: Record<string, any> = {
 };
 
 const styles = StyleSheet.create({
+  textHeader: {
+    fontSize: 20,
+    fontWeight: "bold",
+  },
   section: {
     marginBottom: 20,
   },
