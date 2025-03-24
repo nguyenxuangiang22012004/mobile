@@ -92,16 +92,7 @@ const App: React.FC<Props> = () => {
         <View>
           <FontAwesome5 name="carrot" size={24} color="orange" />
         </View>
-        <View style={styles.location}>
-          <Ionicons name="location-outline" size={20} color="black" />
-          <Text style={styles.locationText}>Dhaka, Banassre</Text>
-        </View>
-      </View>
 
-      {/* Search Bar */}
-      <View style={styles.searchContainer}>
-        <Ionicons name="search-outline" size={20} color="gray" style={styles.searchIcon} />
-        <TextInput placeholder="Search store" style={styles.searchInput} />
       </View>
 
       {/* Banner */}
