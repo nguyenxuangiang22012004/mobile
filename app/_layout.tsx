@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Stack, useRouter, Slot } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import SplashScreen from '@/components/SplashScreen';
-
+import { CartProvider } from '../app/CartContext'; // Đảm bảo đường dẫn đúng
 export default function Layout() {
   const [isFirstLaunch, setIsFirstLaunch] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
@@ -43,12 +43,15 @@ export default function Layout() {
   }
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="index" />
-      <Stack.Screen name="signin" />
-      <Stack.Screen name="signup" />
-      <Stack.Screen name="productdetail" />
-      <Stack.Screen name="category" />
-    </Stack>
+    <CartProvider>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="index" />
+        <Stack.Screen name="signin" />
+        <Stack.Screen name="signup" />
+        <Stack.Screen name="productdetail" />
+        <Stack.Screen name="category" />
+        <Stack.Screen name="mycart" options={{ title: 'My Cart' }} />
+      </Stack>
+    </CartProvider>
   );
 }

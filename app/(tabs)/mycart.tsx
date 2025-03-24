@@ -1,48 +1,77 @@
-import React, { useState } from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView, Alert, TextInput, TouchableWithoutFeedback } from 'react-native';
-import { FontAwesome } from '@expo/vector-icons';
-import { Animated, Easing } from 'react-native';
-import { useRef, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import {
+    View,
+    Text,
+    Image,
+    TouchableOpacity,
+    StyleSheet,
+    ScrollView,
+    Alert,
+    TextInput,
+    TouchableWithoutFeedback,
+    Animated,
+} from 'react-native';
+import { FontAwesome, AntDesign } from '@expo/vector-icons';
 import { useRouter, useRootNavigationState } from 'expo-router';
-import { AntDesign } from '@expo/vector-icons';
-interface CartItemProps {
-    image: string;
-    name: string;
-    details: string;
-    price: number;
+import { useCart } from '../CartContext';
+// Định nghĩa kiểu cho CartItem
+interface CartItem {
+    title: string;
+    subtitle: string;
+    price: string;
+    image: any;
+    quantity: number;
 }
 
-const CartItem: React.FC<CartItemProps> = ({ image, name, details, price }) => (
-    <View style={styles.cartItem}>
-        <Image source={{ uri: image }} style={styles.image} />
-        <View style={styles.itemDetails}>
-            <Text style={styles.itemName}>{name}</Text>
-            <Text style={styles.itemDetailsText}>{details}</Text>
-            <View style={styles.quantityControl}>
-                <TouchableOpacity style={styles.quantityButton}>
-                    <Text style={styles.quantityButtonText}>-</Text>
+// Định nghĩa props cho CartItem component
+interface CartItemProps {
+    item: CartItem;
+    onRemove: (title: string) => void;
+    onUpdateQuantity: (title: string, newQuantity: number) => void;
+}
+
+const CartItemComponent: React.FC<CartItemProps> = ({ item, onRemove, onUpdateQuantity }) => {
+    const price = parseFloat(item.price.replace('$', '')) * item.quantity;
+
+    return (
+        <View style={styles.cartItem}>
+            <Image source={item.image} style={styles.image} />
+            <View style={styles.itemDetails}>
+                <Text style={styles.itemName}>{item.title}</Text>
+                <Text style={styles.itemDetailsText}>{item.subtitle}</Text>
+                <View style={styles.quantityControl}>
+                    <TouchableOpacity
+                        style={styles.quantityButton}
+                        onPress={() => onUpdateQuantity(item.title, item.quantity - 1)}
+                        disabled={item.quantity <= 1}
+                    >
+                        <Text style={styles.quantityButtonText}>-</Text>
+                    </TouchableOpacity>
+                    <Text style={styles.quantityText}>{item.quantity}</Text>
+                    <TouchableOpacity
+                        style={styles.quantityButton}
+                        onPress={() => onUpdateQuantity(item.title, item.quantity + 1)}
+                    >
+                        <Text style={styles.quantityButtonText}>+</Text>
+                    </TouchableOpacity>
+                </View>
+            </View>
+            <View style={styles.closeprice}>
+                <TouchableOpacity style={styles.deleteButton} onPress={() => onRemove(item.title)}>
+                    <FontAwesome name="close" size={24} color="#B3B3B3" />
                 </TouchableOpacity>
-                <Text style={styles.quantityText}>1</Text>
-                <TouchableOpacity style={styles.quantityButton}>
-                    <Text style={styles.quantityButtonText}>+</Text>
-                </TouchableOpacity>
+                <Text style={styles.price}>${price.toFixed(2)}</Text>
             </View>
         </View>
-        <View style={styles.closeprice}>
-            <TouchableOpacity style={styles.deleteButton}>
-                <FontAwesome name="close" size={24} color="#B3B3B3" />
-            </TouchableOpacity>
-            <Text style={styles.price}>${price.toFixed(2)}</Text>
-        </View>
-    </View>
-);
+    );
+};
 
 const App = () => {
+    const { cartItems, setCartItems } = useCart(); // Lấy cartItems và setCartItems từ CartContext
     const [showCheckout, setShowCheckout] = useState(false);
     const fadeAnim = useRef(new Animated.Value(0)).current;
     const blurAnim = useRef(new Animated.Value(1)).current;
-    const [isVisible, setIsVisible] = useState(true); // Kiểm soát hiển thị
-    const navigationState = useRootNavigationState(); // Kiểm tra navigation state
+    const router = useRouter();
 
     useEffect(() => {
         Animated.parallel([
@@ -55,7 +84,7 @@ const App = () => {
                 toValue: showCheckout ? 0.3 : 1,
                 duration: 300,
                 useNativeDriver: true,
-            })
+            }),
         ]).start();
     }, [showCheckout]);
 
@@ -63,9 +92,31 @@ const App = () => {
     const [paymentMethod, setPaymentMethod] = useState('Credit Card');
     const [promoCode, setPromoCode] = useState('');
     const [discount, setDiscount] = useState(0);
-    const basePrice = 100;
-    const totalCost = basePrice - discount;
     const [paymentStatus, setPaymentStatus] = useState<'pending' | 'success' | 'failed'>('pending');
+    const [showError, setShowError] = useState(false);
+
+    // Tính tổng giá tiền
+    const totalCost = cartItems.reduce((total, item) => {
+        const price = parseFloat(item.price.replace('$', '')) * item.quantity;
+        return total + price;
+    }, 0) - discount;
+
+    // Xử lý tăng/giảm số lượng
+    const handleUpdateQuantity = (title: string, newQuantity: number) => {
+        if (newQuantity < 1) return; // Không cho phép số lượng nhỏ hơn 1
+        setCartItems((prevItems) =>
+            prevItems.map((item) =>
+                item.title === title ? { ...item, quantity: newQuantity } : item
+            )
+        );
+    };
+
+    // Xử lý xóa sản phẩm
+    const handleRemoveItem = (title: string) => {
+        setCartItems((prevItems) => prevItems.filter((item) => item.title !== title));
+    };
+
+    // Xử lý áp dụng mã giảm giá
     const applyPromoCode = () => {
         if (promoCode === 'DISCOUNT10') {
             setDiscount(2);
@@ -75,21 +126,8 @@ const App = () => {
             Alert.alert('Invalid', 'This promo code is not valid.');
         }
     };
-    const [showError, setShowError] = useState(false);
 
-    // Khi paymentStatus thay đổi, cập nhật showError
-    useEffect(() => {
-        if (paymentStatus === 'failed') {
-            setShowError(true);
-        }
-    }, [paymentStatus]);
-
-    const handleTryAgain = () => {
-        setShowError(false); // Ẩn màn hình lỗi trước
-        router.push('/mycart'); // Chuyển về màn hình mycart
-    };
-
-    const router = useRouter();
+    // Xử lý thanh toán
     const handlePayment = () => {
         const isSuccess = Math.random() > 0.5; // Giả lập thanh toán thành công/thất bại
         if (isSuccess) {
@@ -97,9 +135,15 @@ const App = () => {
             router.push('/orderaccept'); // Điều hướng tới màn hình thành công
         } else {
             setPaymentStatus('failed'); // Hiển thị màn hình thất bại
+            setShowError(true);
         }
     };
 
+    // Xử lý thử lại khi thanh toán thất bại
+    const handleTryAgain = () => {
+        setShowError(false);
+        setPaymentStatus('pending');
+    };
 
     return (
         <View style={styles.container}>
@@ -107,24 +151,40 @@ const App = () => {
                 <View style={styles.header}>
                     <Text style={styles.headerText}>My Cart</Text>
                 </View>
-                <ScrollView style={styles.cartItems}>
-                    <CartItem image="https://placehold.co/64" name="Apple" details="1kg" price={2.99} />
-                    <CartItem image="https://placehold.co/64" name="Orange" details="500g" price={1.49} />
-                </ScrollView>
-                <TouchableOpacity style={styles.checkoutButton} onPress={() => setShowCheckout(true)}>
-                    <Text style={styles.checkoutButtonText}>Go to Checkout</Text>
-                    <View style={styles.checkoutPrice}>
-                        <Text style={styles.checkoutPriceText}>${totalCost.toFixed(2)}</Text>
+                {cartItems.length === 0 ? (
+                    <View style={styles.emptyCart}>
+                        <Text style={styles.emptyCartText}>Your cart is empty</Text>
                     </View>
-                </TouchableOpacity>
+                ) : (
+                    <ScrollView style={styles.cartItems}>
+                        {cartItems.map((item, index) => (
+                            <CartItemComponent
+                                key={index}
+                                item={item}
+                                onRemove={handleRemoveItem}
+                                onUpdateQuantity={handleUpdateQuantity}
+                            />
+                        ))}
+                    </ScrollView>
+                )}
+                {cartItems.length > 0 && (
+                    <TouchableOpacity style={styles.checkoutButton} onPress={() => setShowCheckout(true)}>
+                        <Text style={styles.checkoutButtonText}>Go to Checkout</Text>
+                        <View style={styles.checkoutPrice}>
+                            <Text style={styles.checkoutPriceText}>${totalCost.toFixed(2)}</Text>
+                        </View>
+                    </TouchableOpacity>
+                )}
             </Animated.View>
 
             {showCheckout && (
-                <TouchableWithoutFeedback onPress={(event) => {
-                    if (event.target === event.currentTarget) {
-                        setShowCheckout(false);
-                    }
-                }}>
+                <TouchableWithoutFeedback
+                    onPress={(event) => {
+                        if (event.target === event.currentTarget) {
+                            setShowCheckout(false);
+                        }
+                    }}
+                >
                     <Animated.View style={[styles.overlay, { opacity: fadeAnim }]}>
                         <View style={styles.card}>
                             <View style={styles.header}>
@@ -134,8 +194,14 @@ const App = () => {
                             <ScrollView style={styles.content}>
                                 <View style={styles.row}>
                                     <Text style={styles.label}>Delivery</Text>
-                                    <TouchableOpacity style={styles.rowEnd}
-                                        onPress={() => setDeliveryMethod(deliveryMethod === 'Standard Delivery' ? 'Express Delivery' : 'Standard Delivery')}>
+                                    <TouchableOpacity
+                                        style={styles.rowEnd}
+                                        onPress={() =>
+                                            setDeliveryMethod(
+                                                deliveryMethod === 'Standard Delivery' ? 'Express Delivery' : 'Standard Delivery'
+                                            )
+                                        }
+                                    >
                                         <Text style={styles.value}>{deliveryMethod}</Text>
                                         <FontAwesome name="angle-right" size={20} color="gray" />
                                     </TouchableOpacity>
@@ -143,8 +209,12 @@ const App = () => {
 
                                 <View style={styles.row}>
                                     <Text style={styles.label}>Payment</Text>
-                                    <TouchableOpacity style={styles.rowEnd}
-                                        onPress={() => setPaymentMethod(paymentMethod === 'Credit Card' ? 'PayPal' : 'Credit Card')}>
+                                    <TouchableOpacity
+                                        style={styles.rowEnd}
+                                        onPress={() =>
+                                            setPaymentMethod(paymentMethod === 'Credit Card' ? 'PayPal' : 'Credit Card')
+                                        }
+                                    >
                                         <Text style={styles.value}>{paymentMethod}</Text>
                                         <FontAwesome name="angle-right" size={20} color="gray" />
                                     </TouchableOpacity>
@@ -153,8 +223,12 @@ const App = () => {
                                 <View style={styles.row}>
                                     <Text style={styles.label}>Promo Code</Text>
                                     <View style={styles.rowEnd}>
-                                        <TextInput style={styles.input} placeholder="Enter code"
-                                            value={promoCode} onChangeText={setPromoCode} />
+                                        <TextInput
+                                            style={styles.input}
+                                            placeholder="Enter code"
+                                            value={promoCode}
+                                            onChangeText={setPromoCode}
+                                        />
                                         <TouchableOpacity onPress={applyPromoCode}>
                                             <Text style={styles.applyText}>Apply</Text>
                                         </TouchableOpacity>
@@ -168,35 +242,36 @@ const App = () => {
                                 </View>
                             </ScrollView>
 
-                            <TouchableOpacity style={styles.button} onPress={() => handlePayment()}>
+                            <TouchableOpacity style={styles.button} onPress={handlePayment}>
                                 <Text style={styles.buttonText}>Place Order</Text>
                             </TouchableOpacity>
                         </View>
                     </Animated.View>
                 </TouchableWithoutFeedback>
             )}
+
             {showError && (
                 <Animated.View style={[styles.overlay, { opacity: fadeAnim }]}>
                     <View style={styles.card}>
-                        <TouchableOpacity style={styles.closeIconContainer} onPress={() => router.push('/(tabs)')}>
+                        <TouchableOpacity
+                            style={styles.closeIconContainer}
+                            onPress={() => router.push('/(tabs)')}
+                        >
                             <AntDesign name="close" size={24} color="#1F2937" />
                         </TouchableOpacity>
 
-                        {/* Hình ảnh minh họa */}
                         <View style={styles.iconContainer}>
-                            <Image source={require('../../assets/images/order-failed.png')} style={styles.imageIcon} />
+                            <Image
+                                source={require('../../assets/images/order-failed.png')}
+                                style={styles.imageIcon}
+                            />
                         </View>
-                        {/* Tiêu đề */}
                         <Text style={styles.title}>Oops! Order Failed</Text>
-                        <Text style={styles.subtitle}>
-                            Something went terribly wrong
-                        </Text>
+                        <Text style={styles.subtitle}>Something went terribly wrong</Text>
 
-                        {/* Nút thử lại */}
                         <TouchableOpacity style={styles.button} onPress={handleTryAgain}>
                             <Text style={styles.buttonText}>Please Try Again</Text>
                         </TouchableOpacity>
-                        {/* Nút quay về trang chủ */}
                         <TouchableOpacity onPress={() => router.push('/(tabs)')}>
                             <Text style={styles.linkText}>Back to home</Text>
                         </TouchableOpacity>
@@ -208,6 +283,16 @@ const App = () => {
 };
 
 const styles = StyleSheet.create({
+    emptyCart: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 16,
+    },
+    emptyCartText: {
+        fontSize: 18,
+        color: '#6B7280',
+    },
     iconContainer: {
         position: 'relative',
         width: 150,
