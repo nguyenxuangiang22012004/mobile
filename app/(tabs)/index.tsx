@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { Ionicons, FontAwesome, FontAwesome5 } from '@expo/vector-icons';
 import { useRouter } from "expo-router";
+import { useCart } from "../CartContext"; // Import CartContext
 type Props = {};
 const App = (props: Props) => {
 
@@ -71,20 +72,28 @@ const imageMap: Record<string, any> = {
 
 const renderSection = (
   title: string,
-
   items: { title: string; subtitle: string; price: string; image: any }[]
 ) => {
-  const router = useRouter(); // Lấy đối tượng router
+  const router = useRouter();
   return (
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>{title}</Text>
-        <TouchableOpacity>
+        <TouchableOpacity
+          onPress={() =>
+            router.push({
+              pathname: "/allproduct",
+              params: {
+                title,
+                items: JSON.stringify(items) // Chuyển đổi thành JSON string
+              },
+            })
+          }
+        >
           <Text style={styles.sectionLink}>See all</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Horizontal ScrollView */}
       <ScrollView horizontal={true} showsHorizontalScrollIndicator={false}>
         <View style={styles.cardContainer}>
           {items.map((item, index) => (
@@ -97,7 +106,7 @@ const renderSection = (
                   params: {
                     title: item.title,
                     price: item.price,
-                    image: item.title,
+                    image: item.image,
                     subtitle: item.subtitle,
                   },
                 })
@@ -119,6 +128,7 @@ const renderSection = (
     </View>
   );
 };
+
 
 const styles = StyleSheet.create({
   section: {
