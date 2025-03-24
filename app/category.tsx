@@ -76,7 +76,7 @@ const CategoryScreen = () => {
                                     title: item.name,
                                     subtitle: item.size,
                                     price: item.price,
-                                    image: item.name,
+                                    image: item.name.toLowerCase(), // Chuẩn hóa thành chữ thường
                                 },
                             })
                         }

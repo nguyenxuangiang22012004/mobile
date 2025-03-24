@@ -12,37 +12,45 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import Feather from '@expo/vector-icons/Feather';
 import { Ionicons } from '@expo/vector-icons';
 import { useCart } from '../app/CartContext';
-import { useFavourites } from '../app/FavouriteContext'; // Import FavouriteContext
+import { useFavourites } from '../app/FavouriteContext';
 
-// Map hình ảnh
+// Map hình ảnh - Sử dụng key chữ thường để chuẩn hóa
 const imageMap: Record<string, any> = {
-    'Organic Bananas': require('../assets/images/banana.png'),
-    'Red Apple': require('../assets/images/apple.png'),
-    'Bell Pepper Red': require('../assets/images/bell_pepper.png'),
-    'Ginger': require('../assets/images/ginger.png'),
-    'Beef Bone': require('../assets/images/beefBone.png'),
-    'Broiler Chicken': require('../assets/images/boiler_chicken.png'),
+    'apple': require('../assets/images/apple.png'),
+    'carrot': require('../assets/images/coka.png'),
+    'coca cola': require('../assets/images/coka.png'),
+    'orange juice': require('../assets/images/coka.png'),
+    'organic bananas': require('../assets/images/banana.png'),
+    'red apple': require('../assets/images/apple.png'),
+    'bell pepper red': require('../assets/images/bell_pepper.png'),
+    'ginger': require('../assets/images/ginger.png'),
+    'beef bone': require('../assets/images/beefBone.png'),
+    'broiler chicken': require('../assets/images/boiler_chicken.png'),
 };
 
 const ProductPage: React.FC = () => {
     const params = useLocalSearchParams();
     const router = useRouter();
     const { addToCart } = useCart();
-    const { addToFavourites, removeFromFavourites, favouriteItems } = useFavourites(); // Sử dụng FavouriteContext
+    const { addToFavourites, removeFromFavourites, favouriteItems } = useFavourites();
 
     // Xử lý các giá trị params để đảm bảo chúng là string
     const title = Array.isArray(params.title) ? params.title[0] : params.title || 'Unknown Product';
     const subtitle = Array.isArray(params.subtitle) ? params.subtitle[0] : params.subtitle || '';
     const price = Array.isArray(params.price) ? params.price[0] : params.price || '$0.00';
-    const imageKeyRaw = Array.isArray(params.image) ? params.image[0] : params.image || 'Red Apple';
+    const imageKeyRaw = Array.isArray(params.image) ? params.image[0] : params.image || 'red apple';
 
-    // Chuẩn hóa imageKey: bỏ khoảng trắng thừa
-    const imageKey = imageKeyRaw.trim();
+    // Chuẩn hóa imageKey: bỏ khoảng trắng thừa và chuyển về chữ thường
+    const imageKey = imageKeyRaw.trim().toLowerCase();
+    const finalImageKey = isNaN(Number(imageKey)) ? imageKey : title.toLowerCase();
 
-    // Kiểm tra xem imageKey có phải là một số không, nếu có thì dùng title làm imageKey
-    const finalImageKey = isNaN(Number(imageKey)) ? imageKey : title;
+    // Debug
+    console.log('imageKeyRaw:', imageKeyRaw);
+    console.log('finalImageKey:', finalImageKey);
+    console.log('imageMap[finalImageKey]:', imageMap[finalImageKey]);
+    console.log('Available keys in imageMap:', Object.keys(imageMap));
 
-    const [liked, setLiked] = useState(favouriteItems.some((item) => item.title === title)); // Kiểm tra xem sản phẩm đã được thích chưa
+    const [liked, setLiked] = useState(favouriteItems.some((item) => item.title === title));
     const [quantity, setQuantity] = useState(1);
 
     // Lấy ảnh từ map, nếu không có thì dùng ảnh mặc định
@@ -58,13 +66,11 @@ const ProductPage: React.FC = () => {
         };
 
         if (liked) {
-            // Nếu đã thích, xóa khỏi danh sách yêu thích
             removeFromFavourites(title);
         } else {
-            // Nếu chưa thích, thêm vào danh sách yêu thích
             addToFavourites(product);
         }
-        setLiked(!liked); // Cập nhật trạng thái liked
+        setLiked(!liked);
     };
 
     // Hàm xử lý tăng số lượng
