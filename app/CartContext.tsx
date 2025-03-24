@@ -10,8 +10,8 @@ interface CartItem {
 
 interface CartContextValue {
     cartItems: CartItem[];
-    addToCart: (item: Omit<CartItem, 'quantity'>) => void;
-    setCartItems: React.Dispatch<React.SetStateAction<CartItem[]>>; // Thêm setCartItems
+    addToCart: (item: Omit<CartItem, 'quantity'> & { quantity?: number }) => void;
+    setCartItems: React.Dispatch<React.SetStateAction<CartItem[]>>;
 }
 
 const CartContext = createContext<CartContextValue | undefined>(undefined);
@@ -23,17 +23,19 @@ interface CartProviderProps {
 export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     const [cartItems, setCartItems] = useState<CartItem[]>([]);
 
-    const addToCart = (item: Omit<CartItem, 'quantity'>) => {
+    const addToCart = (item: Omit<CartItem, 'quantity'> & { quantity?: number }) => {
         setCartItems((prevItems) => {
             const existingItem = prevItems.find((cartItem) => cartItem.title === item.title);
             if (existingItem) {
+                // Nếu sản phẩm đã tồn tại, cập nhật số lượng bằng cách cộng dồn quantity mới
                 return prevItems.map((cartItem) =>
                     cartItem.title === item.title
-                        ? { ...cartItem, quantity: cartItem.quantity + 1 }
+                        ? { ...cartItem, quantity: cartItem.quantity + (item.quantity || 1) }
                         : cartItem
                 );
             }
-            return [...prevItems, { ...item, quantity: 1 }];
+            // Nếu sản phẩm chưa tồn tại, thêm mới với quantity được truyền vào
+            return [...prevItems, { ...item, quantity: item.quantity || 1 }];
         });
     };
 

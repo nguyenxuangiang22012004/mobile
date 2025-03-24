@@ -35,7 +35,7 @@ const App: React.FC<Props> = () => {
           <TouchableOpacity
             onPress={() =>
               router.push({
-                pathname: '/allproduct',
+                pathname: "/allproduct",
                 params: {
                   title,
                   items: JSON.stringify(items),
@@ -55,11 +55,11 @@ const App: React.FC<Props> = () => {
                 style={styles.card}
                 onPress={() =>
                   router.push({
-                    pathname: '/productdetail',
+                    pathname: "/productdetail",
                     params: {
                       title: item.title,
                       price: item.price,
-                      image: item.image,
+                      image: item.title, // Đảm bảo truyền item.title, không phải index
                       subtitle: item.subtitle,
                     },
                   })

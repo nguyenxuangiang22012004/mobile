@@ -1,7 +1,7 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { View, Text, FlatList, Image, TouchableOpacity, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useCart } from "../app/CartContext"; // Import useCart từ CartContext
+import { useCart } from "../app/CartContext";
 
 // Định nghĩa kiểu cho item
 interface Item {
@@ -14,14 +14,14 @@ interface Item {
 const AllProducts: React.FC = () => {
     const router = useRouter();
     const { title, items } = useLocalSearchParams();
-    const { addToCart } = useCart(); // Sử dụng useCart để lấy addToCart
+    const { addToCart } = useCart();
 
     // Parse items từ JSON string về mảng object
     const parsedItems: Item[] = items ? JSON.parse(items as string) : [];
 
     // Hàm xử lý khi nhấn nút "add"
     const handleAddToCart = (item: Item) => {
-        addToCart(item); // Thêm sản phẩm vào giỏ hàng
+        addToCart(item);
     };
 
     return (
@@ -39,7 +39,7 @@ const AllProducts: React.FC = () => {
                                 params: {
                                     title: item.title,
                                     price: item.price,
-                                    image: item.image,
+                                    image: item.title, // Đảm bảo truyền item.title, không phải index
                                     subtitle: item.subtitle,
                                 },
                             })
@@ -52,7 +52,7 @@ const AllProducts: React.FC = () => {
                             <Text style={styles.cardPrice}>{item.price}</Text>
                             <TouchableOpacity
                                 style={styles.addButton}
-                                onPress={() => handleAddToCart(item)} // Gọi hàm handleAddToCart khi nhấn nút "add"
+                                onPress={() => handleAddToCart(item)}
                             >
                                 <Ionicons name="add" size={20} color="white" />
                             </TouchableOpacity>

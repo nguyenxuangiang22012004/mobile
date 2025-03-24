@@ -1,33 +1,107 @@
 import React, { useState } from 'react';
 import {
-    View, Text, Image, TouchableOpacity, StyleSheet, ScrollView
+    View,
+    Text,
+    Image,
+    TouchableOpacity,
+    StyleSheet,
+    ScrollView,
 } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import Feather from '@expo/vector-icons/Feather';
-import { images } from "../assets/images/images"; // Import danh sách ảnh
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons } from '@expo/vector-icons';
+import { useCart } from '../app/CartContext';
+import { useFavourites } from '../app/FavouriteContext'; // Import FavouriteContext
+
+// Map hình ảnh
 const imageMap: Record<string, any> = {
-    "Organic Bananas": require("../assets/images/banana.png"),
-    "Red Apple": require("../assets/images/apple.png"),
-    "Bell Pepper Red": require("../assets/images/bell_pepper.png"),
-    "Ginger": require("../assets/images/ginger.png"),
-    "Beef Bone": require("../assets/images/beefBone.png"),
-    "Broiler Chicken": require("../assets/images/boiler_chicken.png"),
+    'Organic Bananas': require('../assets/images/banana.png'),
+    'Red Apple': require('../assets/images/apple.png'),
+    'Bell Pepper Red': require('../assets/images/bell_pepper.png'),
+    'Ginger': require('../assets/images/ginger.png'),
+    'Beef Bone': require('../assets/images/beefBone.png'),
+    'Broiler Chicken': require('../assets/images/boiler_chicken.png'),
 };
-const ProductPage = () => {
+
+const ProductPage: React.FC = () => {
     const params = useLocalSearchParams();
-    const imageKey = Array.isArray(params.image) ? params.image[0] : params.image;
-    const { title, price, image } = params;
-    const [liked, setLiked] = useState(false);
+    const router = useRouter();
+    const { addToCart } = useCart();
+    const { addToFavourites, removeFromFavourites, favouriteItems } = useFavourites(); // Sử dụng FavouriteContext
+
+    // Xử lý các giá trị params để đảm bảo chúng là string
+    const title = Array.isArray(params.title) ? params.title[0] : params.title || 'Unknown Product';
+    const subtitle = Array.isArray(params.subtitle) ? params.subtitle[0] : params.subtitle || '';
+    const price = Array.isArray(params.price) ? params.price[0] : params.price || '$0.00';
+    const imageKeyRaw = Array.isArray(params.image) ? params.image[0] : params.image || 'Red Apple';
+
+    // Chuẩn hóa imageKey: bỏ khoảng trắng thừa
+    const imageKey = imageKeyRaw.trim();
+
+    // Kiểm tra xem imageKey có phải là một số không, nếu có thì dùng title làm imageKey
+    const finalImageKey = isNaN(Number(imageKey)) ? imageKey : title;
+
+    const [liked, setLiked] = useState(favouriteItems.some((item) => item.title === title)); // Kiểm tra xem sản phẩm đã được thích chưa
+    const [quantity, setQuantity] = useState(1);
 
     // Lấy ảnh từ map, nếu không có thì dùng ảnh mặc định
-    const imageSource = imageMap[imageKey] || require("../assets/images/apple.png");
+    const imageSource = imageMap[finalImageKey] || require('../assets/images/apple.png');
+
+    // Hàm xử lý khi nhấn nút thích
+    const handleLikePress = () => {
+        const product = {
+            title,
+            subtitle,
+            price,
+            image: imageSource,
+        };
+
+        if (liked) {
+            // Nếu đã thích, xóa khỏi danh sách yêu thích
+            removeFromFavourites(title);
+        } else {
+            // Nếu chưa thích, thêm vào danh sách yêu thích
+            addToFavourites(product);
+        }
+        setLiked(!liked); // Cập nhật trạng thái liked
+    };
+
+    // Hàm xử lý tăng số lượng
+    const handleIncreaseQuantity = () => {
+        setQuantity((prev) => prev + 1);
+    };
+
+    // Hàm xử lý giảm số lượng
+    const handleDecreaseQuantity = () => {
+        if (quantity > 1) {
+            setQuantity((prev) => prev - 1);
+        }
+    };
+
+    // Hàm xử lý thêm sản phẩm vào giỏ hàng
+    const handleAddToBasket = () => {
+        const product = {
+            title,
+            subtitle,
+            price,
+            image: imageSource,
+            quantity,
+        };
+        addToCart(product);
+        router.push('/mycart');
+    };
+
+    // Hàm xử lý quay lại màn hình trước đó
+    const handleGoBack = () => {
+        router.back();
+    };
+
     return (
         <View style={styles.container}>
             {/* Header */}
             <View style={styles.header}>
-                <TouchableOpacity>
+                <TouchableOpacity onPress={handleGoBack}>
                     <FontAwesome name="arrow-left" size={24} color="black" />
                 </TouchableOpacity>
                 <Text style={styles.productTitle}>Product</Text>
@@ -47,26 +121,30 @@ const ProductPage = () => {
                 <View style={styles.productInfo}>
                     <View style={styles.productHeader}>
                         <View>
-                            <Text style={styles.productTitle}>{params.title}</Text>
-                            <Text style={styles.productSubtitle}>{params.subtitle}</Text>
+                            <Text style={styles.productTitle}>{title}</Text>
+                            <Text style={styles.productSubtitle}>{subtitle}</Text>
                         </View>
 
-                        <TouchableOpacity onPress={() => setLiked(!liked)}>
-                            <Ionicons name={liked ? "heart" : "heart-outline"} size={24} color={liked ? "red" : "gray"} />
+                        <TouchableOpacity onPress={handleLikePress}>
+                            <Ionicons
+                                name={liked ? 'heart' : 'heart-outline'}
+                                size={24}
+                                color={liked ? 'red' : 'gray'}
+                            />
                         </TouchableOpacity>
                     </View>
 
                     <View style={styles.productPriceContainer}>
                         <View style={styles.quantityContainer}>
-                            <TouchableOpacity>
+                            <TouchableOpacity onPress={handleDecreaseQuantity}>
                                 <Text style={styles.quantityButton}>-</Text>
                             </TouchableOpacity>
-                            <Text style={styles.quantityText}>1</Text>
-                            <TouchableOpacity>
+                            <Text style={styles.quantityText}>{quantity}</Text>
+                            <TouchableOpacity onPress={handleIncreaseQuantity}>
                                 <Text style={styles.quantityButton}>+</Text>
                             </TouchableOpacity>
                         </View>
-                        <Text style={styles.productPrice}>{params.price}</Text>
+                        <Text style={styles.productPrice}>{price}</Text>
                     </View>
                 </View>
 
@@ -102,7 +180,7 @@ const ProductPage = () => {
 
             {/* Add to Basket Button */}
             <View style={styles.addToBasketContainer}>
-                <TouchableOpacity style={styles.addToBasketButton}>
+                <TouchableOpacity style={styles.addToBasketButton} onPress={handleAddToBasket}>
                     <Text style={styles.addToBasketText}>Add To Basket</Text>
                 </TouchableOpacity>
             </View>
@@ -118,7 +196,10 @@ const styles = StyleSheet.create({
         backgroundColor: 'white',
     },
     productImage: {
-        width: 200, height: 200, resizeMode: "contain", alignSelf: "center"
+        width: 200,
+        height: 200,
+        resizeMode: 'contain',
+        alignSelf: 'center',
     },
     container: {
         backgroundColor: '#F9FAFB',

@@ -1,15 +1,18 @@
 import React from 'react';
 import { View, Text, Image, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { FontAwesome } from '@expo/vector-icons';
 import AntDesign from '@expo/vector-icons/AntDesign';
+import { useCart } from '../app/CartContext';
+
 type Product = {
     id: number;
     name: string;
     size: string;
     price: string;
-    image: string;
+    image: string | any;
 };
+
 const products: Record<string, Product[]> = {
     "Frash Fruits & Vegetable": [
         { id: 1, name: "Apple", size: "1kg", price: "$2.99", image: require("../assets/images/coka.png") },
@@ -27,20 +30,36 @@ const products: Record<string, Product[]> = {
         { id: 5, name: "Coca Cola", size: "500ml", price: "$1.99", image: require("../assets/images/coka.png") },
         { id: 6, name: "Orange Juice", size: "1L", price: "$3.99", image: require("../assets/images/coka.png") },
     ],
-
 };
 
 const CategoryScreen = () => {
     const { title } = useLocalSearchParams();
+    const router = useRouter();
+    const { addToCart } = useCart();
+
     const categoryTitle = title ? decodeURIComponent(title as string) : "Products";
     const categoryProducts = products[categoryTitle] || [];
+
+    const handleAddToCart = (product: Product) => {
+        addToCart({
+            title: product.name,
+            subtitle: product.size,
+            price: product.price,
+            image: product.image,
+            quantity: 1,
+        });
+    };
 
     return (
         <View style={styles.container}>
             <View style={styles.titleicon}>
-                <AntDesign name="left" size={24} color="black" />
+                <TouchableOpacity onPress={() => router.back()}>
+                    <AntDesign name="left" size={24} color="black" />
+                </TouchableOpacity>
                 <Text style={styles.header}>{categoryTitle}</Text>
-                <AntDesign name="right" size={24} color="black" />
+                <TouchableOpacity onPress={() => router.push('/mycart')}>
+                    <AntDesign name="right" size={24} color="black" />
+                </TouchableOpacity>
             </View>
             <FlatList
                 data={categoryProducts}
@@ -48,7 +67,20 @@ const CategoryScreen = () => {
                 numColumns={2}
                 columnWrapperStyle={styles.row}
                 renderItem={({ item }) => (
-                    <View style={styles.productCard}>
+                    <TouchableOpacity
+                        style={styles.productCard}
+                        onPress={() =>
+                            router.push({
+                                pathname: '/productdetail',
+                                params: {
+                                    title: item.name,
+                                    subtitle: item.size,
+                                    price: item.price,
+                                    image: item.name,
+                                },
+                            })
+                        }
+                    >
                         <Image
                             source={typeof item.image === 'string' ? { uri: item.image } : item.image}
                             style={styles.image}
@@ -56,14 +88,16 @@ const CategoryScreen = () => {
                         <Text style={styles.name}>{item.name}</Text>
                         <Text style={styles.size}>{item.size}</Text>
 
-                        {/* Footer */}
                         <View style={styles.footer}>
                             <Text style={styles.price}>{item.price}</Text>
-                            <TouchableOpacity style={styles.addButton}>
+                            <TouchableOpacity
+                                style={styles.addButton}
+                                onPress={() => handleAddToCart(item)}
+                            >
                                 <FontAwesome name="plus" size={16} color="white" />
                             </TouchableOpacity>
                         </View>
-                    </View>
+                    </TouchableOpacity>
                 )}
             />
         </View>
@@ -74,6 +108,8 @@ const styles = StyleSheet.create({
     titleicon: {
         flexDirection: 'row',
         justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: 10,
     },
     container: {
         flex: 1,
@@ -87,14 +123,14 @@ const styles = StyleSheet.create({
         marginBottom: 10,
     },
     row: {
-        justifyContent: "space-between", // Căn cách giữa các cột
+        justifyContent: "space-between",
     },
     productCard: {
         flex: 1,
         backgroundColor: "#f9f9f9",
         borderRadius: 10,
         padding: 10,
-        margin: 5, // Đảm bảo khoảng cách giữa các cột
+        margin: 5,
         alignItems: "center",
     },
     image: {
@@ -130,6 +166,5 @@ const styles = StyleSheet.create({
         borderRadius: 5,
     },
 });
-
 
 export default CategoryScreen;

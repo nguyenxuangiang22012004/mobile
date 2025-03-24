@@ -30,12 +30,6 @@ const App = () => {
       {/* Header */}
       <Text style={styles.header}>Find Products</Text>
 
-      {/* Search Bar */}
-      <View style={styles.searchContainer}>
-        <FontAwesome name="search" size={20} color="gray" style={styles.searchIcon} />
-        <TextInput placeholder="Search Store" style={styles.searchInput} />
-      </View>
-
       {/* Product Categories */}
       <ScrollView contentContainerStyle={styles.grid}>
         {categories.map((item, index) => {
