@@ -53,6 +53,7 @@ export default function Layout() {
           <Stack.Screen name="productdetail" />
           <Stack.Screen name="category" />
           <Stack.Screen name="mycart" options={{ title: 'My Cart' }} />
+
         </Stack>
       </FavouriteProvider>
     </CartProvider>

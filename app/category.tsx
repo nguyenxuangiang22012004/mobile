@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, Image, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, Image, FlatList, TouchableOpacity, StyleSheet, TextInput } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { FontAwesome } from '@expo/vector-icons';
 import AntDesign from '@expo/vector-icons/AntDesign';
@@ -40,6 +40,14 @@ const CategoryScreen = () => {
     const categoryTitle = title ? decodeURIComponent(title as string) : "Products";
     const categoryProducts = products[categoryTitle] || [];
 
+    // State để lưu từ khóa tìm kiếm
+    const [searchQuery, setSearchQuery] = useState<string>('');
+
+    // Lọc danh sách sản phẩm dựa trên từ khóa tìm kiếm
+    const filteredProducts = categoryProducts.filter((product) =>
+        product.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
     const handleAddToCart = (product: Product) => {
         addToCart({
             title: product.name,
@@ -61,8 +69,20 @@ const CategoryScreen = () => {
                     <AntDesign name="right" size={24} color="black" />
                 </TouchableOpacity>
             </View>
+
+            {/* Search Input */}
+            <View style={styles.searchContainer}>
+                <AntDesign name="search1" size={20} color="gray" style={styles.searchIcon} />
+                <TextInput
+                    style={styles.searchInput}
+                    placeholder="Search products..."
+                    value={searchQuery}
+                    onChangeText={(text) => setSearchQuery(text)}
+                />
+            </View>
+
             <FlatList
-                data={categoryProducts}
+                data={filteredProducts}
                 keyExtractor={(item) => item.id.toString()}
                 numColumns={2}
                 columnWrapperStyle={styles.row}
@@ -76,7 +96,7 @@ const CategoryScreen = () => {
                                     title: item.name,
                                     subtitle: item.size,
                                     price: item.price,
-                                    image: item.name.toLowerCase(), // Chuẩn hóa thành chữ thường
+                                    image: item.name.toLowerCase(),
                                 },
                             })
                         }
@@ -99,6 +119,11 @@ const CategoryScreen = () => {
                         </View>
                     </TouchableOpacity>
                 )}
+                ListEmptyComponent={() => (
+                    <View style={styles.emptyContainer}>
+                        <Text style={styles.emptyText}>No products found.</Text>
+                    </View>
+                )}
             />
         </View>
     );
@@ -113,57 +138,83 @@ const styles = StyleSheet.create({
     },
     container: {
         flex: 1,
-        backgroundColor: "#fff",
+        backgroundColor: '#fff',
         padding: 10,
     },
     header: {
         fontSize: 22,
-        fontWeight: "bold",
-        textAlign: "center",
+        fontWeight: 'bold',
+        textAlign: 'center',
         marginBottom: 10,
     },
+    searchContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#f0f0f0',
+        borderRadius: 10,
+        paddingHorizontal: 10,
+        marginBottom: 10,
+    },
+    searchIcon: {
+        marginRight: 10,
+    },
+    searchInput: {
+        flex: 1,
+        height: 40,
+        fontSize: 16,
+    },
     row: {
-        justifyContent: "space-between",
+        justifyContent: 'space-between',
     },
     productCard: {
         flex: 1,
-        backgroundColor: "#f9f9f9",
+        backgroundColor: '#f9f9f9',
         borderRadius: 10,
         padding: 10,
         margin: 5,
-        alignItems: "center",
+        alignItems: 'center',
     },
     image: {
         width: 100,
         height: 100,
-        resizeMode: "contain",
+        resizeMode: 'contain',
     },
     name: {
         fontSize: 16,
-        fontWeight: "bold",
-        textAlign: "center",
+        fontWeight: 'bold',
+        textAlign: 'center',
         marginTop: 5,
     },
     size: {
         fontSize: 14,
-        color: "gray",
+        color: 'gray',
     },
     footer: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        width: "100%",
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        width: '100%',
         marginTop: 10,
     },
     price: {
         fontSize: 16,
-        fontWeight: "bold",
-        color: "#53B175",
+        fontWeight: 'bold',
+        color: '#53B175',
     },
     addButton: {
-        backgroundColor: "#53B175",
+        backgroundColor: '#53B175',
         padding: 8,
         borderRadius: 5,
+    },
+    emptyContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginTop: 20,
+    },
+    emptyText: {
+        fontSize: 16,
+        color: 'gray',
     },
 });
 

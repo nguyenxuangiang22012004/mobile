@@ -1,12 +1,13 @@
-import React from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
-import { FontAwesome5 } from '@expo/vector-icons'; // Changed to FontAwesome5
+import React, { useState } from 'react';
+import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView, TextInput } from 'react-native';
+import { FontAwesome5 } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 
 // Define valid FontAwesome 5 Free icon names
 type IconName =
-    | 'box-open'       // Updated to FontAwesome 5 equivalent for 'cube'
+    | 'box-open'
     | 'id-card'
-    | 'map-marker-alt' // Updated to FontAwesome 5 equivalent
+    | 'map-marker-alt'
     | 'credit-card'
     | 'ticket-alt'
     | 'bell'
@@ -19,26 +20,57 @@ type IconName =
     | 'user'
     | 'pencil-alt'
     | 'angle-right'
-    | 'sign-out-alt'   // Updated to FontAwesome 5 equivalent
+    | 'sign-out-alt'
     | 'signal'
     | 'wifi'
     | 'battery-full';
 
-interface MenuItem {
-    label: string;
-    icon: IconName;
-}
-
-interface BottomNavItem {
-    label: string;
-    icon: IconName;
-    active: boolean;
+// Định nghĩa kiểu cho thông tin cá nhân
+interface PersonalInfo {
+    name: string;
+    email: string;
+    phone: string;
+    address: string;
 }
 
 const ProfileScreen: React.FC = () => {
+    const router = useRouter();
+
+    // State để quản lý thông tin cá nhân
+    const [personalInfo, setPersonalInfo] = useState<PersonalInfo>({
+        name: 'Afsar Hossen',
+        email: 'lmshuvo97@gmail.com',
+        phone: '+123 456 7890',
+        address: '123 Main Street, City, Country',
+    });
+
+    // State để quản lý chế độ chỉnh sửa
+    const [isEditing, setIsEditing] = useState<boolean>(false);
+
+    // State để lưu thông tin tạm thời khi chỉnh sửa
+    const [tempInfo, setTempInfo] = useState<PersonalInfo>({ ...personalInfo });
+
+    // Hàm xử lý đăng xuất
+    const handleLogout = () => {
+        router.replace('/login'); // Thay '/' bằng route của màn hình đăng nhập hoặc màn hình chính
+    };
+
+    // Hàm xử lý khi nhấn nút "Edit" hoặc "Save"
+    const handleEditToggle = () => {
+        if (isEditing) {
+            // Lưu thông tin khi nhấn "Save"
+            setPersonalInfo({ ...tempInfo });
+        }
+        setIsEditing(!isEditing);
+    };
+
+    // Hàm xử lý thay đổi giá trị của các trường thông tin
+    const handleInputChange = (field: keyof PersonalInfo, value: string) => {
+        setTempInfo((prev) => ({ ...prev, [field]: value }));
+    };
+
     return (
         <View style={styles.container}>
-
             {/* Profile Section */}
             <View style={styles.profileSection}>
                 <Image
@@ -46,29 +78,68 @@ const ProfileScreen: React.FC = () => {
                     style={styles.profileImage}
                 />
                 <View style={styles.profileInfo}>
-                    <View style={styles.profileNameContainer}>
-                        <Text style={styles.profileName}>Afsar Hossen</Text>
-                        <FontAwesome5 name="pencil-alt" size={16} style={styles.editIcon} />
-                    </View>
-                    <Text style={styles.profileEmail}>lmshuvo97@gmail.com</Text>
+                    {isEditing ? (
+                        <TextInput
+                            style={styles.profileNameInput}
+                            value={tempInfo.name}
+                            onChangeText={(text) => handleInputChange('name', text)}
+                        />
+                    ) : (
+                        <Text style={styles.profileName}>{personalInfo.name}</Text>
+                    )}
+                    <Text style={styles.profileEmail}>{personalInfo.email}</Text>
                 </View>
             </View>
 
-            {/* Menu Items */}
-            <ScrollView style={styles.menuItems}>
-                {menuItems.map((item, index) => (
-                    <TouchableOpacity key={index} style={styles.menuItem}>
-                        <View style={styles.menuItemLeft}>
-                            <FontAwesome5 name={item.icon} size={20} />
-                            <Text style={styles.menuItemText}>{item.label}</Text>
-                        </View>
-                        <FontAwesome5 name="angle-right" size={20} />
-                    </TouchableOpacity>
-                ))}
+            {/* Personal Information */}
+            <ScrollView style={styles.infoContainer}>
+                <View style={styles.infoItem}>
+                    <Text style={styles.infoLabel}>Email</Text>
+                    {isEditing ? (
+                        <TextInput
+                            style={styles.infoInput}
+                            value={tempInfo.email}
+                            onChangeText={(text) => handleInputChange('email', text)}
+                        />
+                    ) : (
+                        <Text style={styles.infoText}>{personalInfo.email}</Text>
+                    )}
+                </View>
+
+                <View style={styles.infoItem}>
+                    <Text style={styles.infoLabel}>Phone</Text>
+                    {isEditing ? (
+                        <TextInput
+                            style={styles.infoInput}
+                            value={tempInfo.phone}
+                            onChangeText={(text) => handleInputChange('phone', text)}
+                        />
+                    ) : (
+                        <Text style={styles.infoText}>{personalInfo.phone}</Text>
+                    )}
+                </View>
+
+                <View style={styles.infoItem}>
+                    <Text style={styles.infoLabel}>Address</Text>
+                    {isEditing ? (
+                        <TextInput
+                            style={styles.infoInput}
+                            value={tempInfo.address}
+                            onChangeText={(text) => handleInputChange('address', text)}
+                        />
+                    ) : (
+                        <Text style={styles.infoText}>{personalInfo.address}</Text>
+                    )}
+                </View>
             </ScrollView>
 
+            {/* Edit/Save Button */}
+            <TouchableOpacity style={styles.editButton} onPress={handleEditToggle}>
+                <Text style={styles.editButtonText}>{isEditing ? 'Save' : 'Edit'}</Text>
+            </TouchableOpacity>
+
             {/* Log Out Button */}
-            <TouchableOpacity style={styles.logoutButton}>
+            <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
                 <FontAwesome5 name="sign-out-alt" size={20} color="green" />
                 <Text style={styles.logoutText}>Log Out</Text>
             </TouchableOpacity>
@@ -76,47 +147,17 @@ const ProfileScreen: React.FC = () => {
     );
 };
 
-const menuItems: MenuItem[] = [
-    { label: 'Orders', icon: 'box-open' },         // Changed from 'cube'
-    { label: 'My Details', icon: 'id-card' },
-    { label: 'Delivery Address', icon: 'map-marker-alt' }, // Changed from 'map-marker'
-    { label: 'Payment Methods', icon: 'credit-card' },
-    { label: 'Promo Cord', icon: 'ticket-alt' },
-    { label: 'Notifications', icon: 'bell' },
-    { label: 'Help', icon: 'question-circle' },
-    { label: 'About', icon: 'info-circle' },
-];
-
-const bottomNavItems: BottomNavItem[] = [
-    { label: 'Shop', icon: 'store', active: false },
-    { label: 'Explore', icon: 'search', active: false },
-    { label: 'Cart', icon: 'shopping-cart', active: false },
-    { label: 'Favourite', icon: 'heart', active: false },
-    { label: 'Account', icon: 'user', active: true },
-];
-
 const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: 'white',
     },
-    header: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        padding: 16,
-    },
-    time: {
-        fontSize: 16,
-    },
-    headerIcons: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        width: 60,
-    },
     profileSection: {
         flexDirection: 'row',
         alignItems: 'center',
         padding: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: '#e0e0e0',
     },
     profileImage: {
         width: 64,
@@ -125,39 +166,59 @@ const styles = StyleSheet.create({
     },
     profileInfo: {
         marginLeft: 16,
-    },
-    profileNameContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
+        flex: 1,
     },
     profileName: {
         fontSize: 20,
         fontWeight: 'bold',
     },
-    editIcon: {
-        marginLeft: 8,
+    profileNameInput: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        borderBottomWidth: 1,
+        borderBottomColor: '#e0e0e0',
+        paddingVertical: 4,
     },
     profileEmail: {
         color: 'gray',
+        marginTop: 4,
     },
-    menuItems: {
+    infoContainer: {
         flex: 1,
-    },
-    menuItem: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
         padding: 16,
+    },
+    infoItem: {
+        marginBottom: 20,
+    },
+    infoLabel: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: '#333',
+    },
+    infoText: {
+        fontSize: 16,
+        color: 'gray',
+        marginTop: 4,
+    },
+    infoInput: {
+        fontSize: 16,
         borderBottomWidth: 1,
         borderBottomColor: '#e0e0e0',
+        paddingVertical: 4,
+        marginTop: 4,
     },
-    menuItemLeft: {
-        flexDirection: 'row',
+    editButton: {
+        backgroundColor: '#10B981',
+        paddingVertical: 12,
+        borderRadius: 8,
         alignItems: 'center',
+        marginHorizontal: 16,
+        marginBottom: 16,
     },
-    menuItemText: {
-        marginLeft: 16,
+    editButtonText: {
+        color: 'white',
         fontSize: 16,
+        fontWeight: 'bold',
     },
     logoutButton: {
         flexDirection: 'row',
@@ -172,22 +233,6 @@ const styles = StyleSheet.create({
         marginLeft: 8,
         color: 'green',
         fontSize: 16,
-    },
-    bottomNavigation: {
-        flexDirection: 'row',
-        justifyContent: 'space-around',
-        padding: 16,
-        borderTopWidth: 1,
-        borderTopColor: '#e0e0e0',
-    },
-    navItem: {
-        alignItems: 'center',
-    },
-    navText: {
-        fontSize: 12,
-    },
-    navTextActive: {
-        color: 'green',
     },
 });
 
