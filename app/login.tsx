@@ -57,10 +57,11 @@ export default function SignInScreen() {
             </View>
 
             {/* Forgot Password */}
-            <TouchableOpacity style={styles.forgotPassword}>
-                <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-            </TouchableOpacity>
-
+            <Link href="/forgot-password" asChild>
+                <TouchableOpacity style={styles.forgotPassword} onPress={() => router.push('/forgot-password')} >
+                    <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+                </TouchableOpacity>
+            </Link>
             {/* Login Button */}
             <Link href="/(tabs)" asChild>
                 <TouchableOpacity style={styles.loginButton} onPress={() => router.push('/(tabs)')} >
