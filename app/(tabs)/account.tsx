@@ -42,7 +42,7 @@ interface CustomerInfo {
     address: string;
     dateOfBirth: string;
     gender: string;
-    orderCount: number;
+    //orderCount: number;
     // rewardPoints: number; // Bỏ trường này
     defaultPaymentMethod: string;
 }
@@ -58,7 +58,7 @@ const ProfileScreen: React.FC = () => {
         address: '123 Main Street, City, Country',
         dateOfBirth: '1997-01-15',
         gender: 'Male',
-        orderCount: 12,
+        //orderCount: 12,
         // rewardPoints: 350, // Bỏ trường này
         defaultPaymentMethod: 'Credit Card',
     });
@@ -202,15 +202,6 @@ const ProfileScreen: React.FC = () => {
                     ) : (
                         <Text style={styles.infoText}>{customerInfo.gender}</Text>
                     )}
-                </View>
-
-                <View style={styles.infoItem}>
-                    <View style={styles.infoRow}>
-                        <FontAwesome5 name="shopping-bag" size={20} color="gray" />
-                        <Text style={styles.infoLabel}>Order Count</Text>
-                    </View>
-                    {/* Order Count không cho phép chỉnh sửa */}
-                    <Text style={styles.infoText}>{customerInfo.orderCount}</Text>
                 </View>
 
                 {/* View hiển thị Reward Points đã được xóa */}
