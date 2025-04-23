@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
     View,
     Text,
@@ -12,7 +12,7 @@ import { FontAwesome, AntDesign } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useOrder } from './OrderContext';
 
-// Định nghĩa kiểu cho CartItem (tái sử dụng từ App.tsx)
+// Định nghĩa kiểu cho CartItem
 interface CartItem {
     title: string;
     subtitle: string;
@@ -26,7 +26,7 @@ interface Order {
     id: string;
     items: CartItem[];
     placementDate: Date;
-    status: 'Preparing Order' | 'Order Shipped';
+    status: 'Preparing Order' | 'Order Shipped' | 'Delivered' | 'Canceled';
     recipientInfo?: {
         name: string;
         phone: string;
@@ -50,8 +50,8 @@ const getExpectedDeliveryDate = (placementDate: Date): string => {
 };
 
 // Component hiển thị thông tin từng đơn hàng
-const OrderItem: React.FC<{ order: Order; onCancel: (orderId: string) => void }> = ({ order, onCancel }) => {
-    const totalCost = order.totalCost || order.items.reduce((total, item) => {
+const OrderItem: React.FC<{ order: Order; onCancel?: (orderId: string) => void }> = ({ order, onCancel }) => {
+    const totalCost = order.totalCost || order.items.reduce((total: number, item: CartItem) => {
         const price = parseFloat(item.price.replace('$', '')) * item.quantity;
         return total + price;
     }, 0);
@@ -85,7 +85,7 @@ const OrderItem: React.FC<{ order: Order; onCancel: (orderId: string) => void }>
                 <Text style={styles.orderTotal}>Total: ${totalCost.toFixed(2)}</Text>
             </View>
             <View style={styles.orderItems}>
-                {order.items.map((item, index) => (
+                {order.items.map((item: CartItem, index: number) => (
                     <View key={index} style={styles.itemRow}>
                         <Image source={item.image} style={styles.itemImage} />
                         <View style={styles.itemInfo}>
@@ -98,7 +98,7 @@ const OrderItem: React.FC<{ order: Order; onCancel: (orderId: string) => void }>
                     </View>
                 ))}
             </View>
-            {order.status === 'Preparing Order' && (
+            {order.status === 'Preparing Order' && onCancel && (
                 <TouchableOpacity
                     style={styles.cancelButton}
                     onPress={() => onCancel(order.id)}
@@ -113,6 +113,14 @@ const OrderItem: React.FC<{ order: Order; onCancel: (orderId: string) => void }>
 const OrderTrackingScreen: React.FC = () => {
     const router = useRouter();
     const { orders, removeOrder } = useOrder();
+    const [activeTab, setActiveTab] = useState<'active' | 'history'>('active');
+
+    const activeOrders = orders.filter((order: Order) =>
+        ['Preparing Order', 'Order Shipped'].includes(order.status)
+    );
+    const historyOrders = orders.filter((order: Order) =>
+        ['Delivered', 'Canceled'].includes(order.status)
+    );
 
     const handleCancelOrder = (orderId: string) => {
         Alert.alert(
@@ -135,16 +143,48 @@ const OrderTrackingScreen: React.FC = () => {
 
     return (
         <View style={styles.container}>
-            {orders.length === 0 ? (
-                <View style={styles.emptyOrders}>
-                    <Text style={styles.emptyOrdersText}>No orders found</Text>
-                </View>
+            <View style={styles.tabContainer}>
+                <TouchableOpacity
+                    style={[styles.tabButton, activeTab === 'active' && styles.tabButtonActive]}
+                    onPress={() => setActiveTab('active')}
+                >
+                    <Text style={[styles.tabText, activeTab === 'active' && styles.tabTextActive]}>
+                        Active Orders
+                    </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                    style={[styles.tabButton, activeTab === 'history' && styles.tabButtonActive]}
+                    onPress={() => setActiveTab('history')}
+                >
+                    <Text style={[styles.tabText, activeTab === 'history' && styles.tabTextActive]}>
+                        Purchase History
+                    </Text>
+                </TouchableOpacity>
+            </View>
+            {activeTab === 'active' ? (
+                activeOrders.length === 0 ? (
+                    <View style={styles.emptyOrders}>
+                        <Text style={styles.emptyOrdersText}>No active orders found</Text>
+                    </View>
+                ) : (
+                    <ScrollView style={styles.orderList}>
+                        {activeOrders.map((order: Order) => (
+                            <OrderItem key={order.id} order={order} onCancel={handleCancelOrder} />
+                        ))}
+                    </ScrollView>
+                )
             ) : (
-                <ScrollView style={styles.orderList}>
-                    {orders.map(order => (
-                        <OrderItem key={order.id} order={order} onCancel={handleCancelOrder} />
-                    ))}
-                </ScrollView>
+                historyOrders.length === 0 ? (
+                    <View style={styles.emptyOrders}>
+                        <Text style={styles.emptyOrdersText}>No purchase history found</Text>
+                    </View>
+                ) : (
+                    <ScrollView style={styles.orderList}>
+                        {historyOrders.map((order: Order) => (
+                            <OrderItem key={order.id} order={order} />
+                        ))}
+                    </ScrollView>
+                )
             )}
         </View>
     );
@@ -170,6 +210,30 @@ const styles = StyleSheet.create({
     },
     backButton: {
         padding: 8,
+    },
+    tabContainer: {
+        flexDirection: 'row',
+        borderBottomWidth: 1,
+        borderBottomColor: '#e0e0e0',
+        marginHorizontal: 16,
+        marginBottom: 8,
+    },
+    tabButton: {
+        flex: 1,
+        paddingVertical: 12,
+        alignItems: 'center',
+    },
+    tabButtonActive: {
+        borderBottomWidth: 2,
+        borderBottomColor: '#53B175',
+    },
+    tabText: {
+        fontSize: 16,
+        color: '#6B7280',
+        fontWeight: '600',
+    },
+    tabTextActive: {
+        color: '#53B175',
     },
     emptyOrders: {
         flex: 1,

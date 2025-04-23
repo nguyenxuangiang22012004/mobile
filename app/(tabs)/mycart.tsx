@@ -88,19 +88,17 @@ const App = () => {
     const { cartItems, setCartItems } = useCart();
     const { addOrder } = useOrder();
     const [showCheckout, setShowCheckout] = useState(false);
-    const [selectedItems, setSelectedItems] = useState<string[]>(cartItems.map(item => item.title));
+    const [selectedItems, setSelectedItems] = useState<string[]>(cartItems.map((item: CartItem) => item.title));
     const fadeAnim = useRef(new Animated.Value(0)).current;
     const blurAnim = useRef(new Animated.Value(1)).current;
     const router = useRouter();
 
-    // Mock customer info from ProfileScreen (in a real app, this would come from a context or API)
     const [customerInfo, setCustomerInfo] = useState<CustomerInfo>({
         name: 'Afsar Hossen',
         phone: '+123 456 7890',
         address: '123 Main Street, City, Country',
     });
 
-    // State để quản lý thông tin chỉnh sửa trong checkout
     const [recipientInfo, setRecipientInfo] = useState<CustomerInfo>({
         name: customerInfo.name,
         phone: customerInfo.phone,
@@ -129,43 +127,37 @@ const App = () => {
     const [paymentStatus, setPaymentStatus] = useState<'pending' | 'success' | 'failed'>('pending');
     const [showError, setShowError] = useState(false);
 
-    // Handle item selection
     const handleSelectItem = (title: string, isSelected: boolean) => {
-        setSelectedItems(prev =>
-            isSelected ? [...prev, title] : prev.filter(item => item !== title)
+        setSelectedItems((prev: string[]) =>
+            isSelected ? [...prev, title] : prev.filter((item: string) => item !== title)
         );
     };
 
-    // Handle input change for recipient info
     const handleRecipientInputChange = (field: keyof CustomerInfo, value: string) => {
         setRecipientInfo(prev => ({ ...prev, [field]: value }));
     };
 
-    // Tính tổng giá tiền của các sản phẩm được chọn
     const totalCost = cartItems
-        .filter(item => selectedItems.includes(item.title))
-        .reduce((total, item) => {
+        .filter((item: CartItem) => selectedItems.includes(item.title))
+        .reduce((total: number, item: CartItem) => {
             const price = parseFloat(item.price.replace('$', '')) * item.quantity;
             return total + price;
         }, 0) - discount;
 
-    // Xử lý tăng/giảm số lượng
     const handleUpdateQuantity = (title: string, newQuantity: number) => {
         if (newQuantity < 1) return;
-        setCartItems((prevItems) =>
-            prevItems.map((item) =>
+        setCartItems((prevItems: CartItem[]) =>
+            prevItems.map((item: CartItem) =>
                 item.title === title ? { ...item, quantity: newQuantity } : item
             )
         );
     };
 
-    // Xử lý xóa sản phẩm
     const handleRemoveItem = (title: string) => {
-        setCartItems((prevItems) => prevItems.filter((item) => item.title !== title));
-        setSelectedItems(prev => prev.filter(item => item !== title));
+        setCartItems((prevItems: CartItem[]) => prevItems.filter((item: CartItem) => item.title !== title));
+        setSelectedItems((prev: string[]) => prev.filter((item: string) => item !== title));
     };
 
-    // Xử lý áp dụng mã giảm giá
     const applyPromoCode = () => {
         if (promoCode === 'DISCOUNT10') {
             setDiscount(2);
@@ -176,7 +168,6 @@ const App = () => {
         }
     };
 
-    // Xử lý thanh toán
     const handlePayment = () => {
         if (selectedItems.length === 0) {
             Alert.alert('Error', 'Please select at least one item to checkout.');
@@ -190,9 +181,9 @@ const App = () => {
         if (isSuccess) {
             const newOrder = {
                 id: `ORDER-${Date.now()}`,
-                items: cartItems.filter(item => selectedItems.includes(item.title)),
+                items: cartItems.filter((item: CartItem) => selectedItems.includes(item.title)),
                 placementDate: new Date(),
-                status: 'Preparing Order' as 'Preparing Order',
+                status: 'Preparing Order' as 'Preparing Order' | 'Order Shipped' | 'Delivered' | 'Canceled',
                 recipientInfo: { ...recipientInfo },
                 deliveryMethod,
                 paymentMethod,
@@ -200,7 +191,7 @@ const App = () => {
             };
             addOrder(newOrder);
             setPaymentStatus('success');
-            setCartItems(prev => prev.filter(item => !selectedItems.includes(item.title)));
+            setCartItems((prevItems: CartItem[]) => prevItems.filter((item: CartItem) => !selectedItems.includes(item.title)));
             setSelectedItems([]);
             router.push('/orderaccept');
         } else {
@@ -209,7 +200,6 @@ const App = () => {
         }
     };
 
-    // Xử lý thử lại khi thanh toán thất bại
     const handleTryAgain = () => {
         setShowError(false);
         setPaymentStatus('pending');
@@ -227,7 +217,7 @@ const App = () => {
                     </View>
                 ) : (
                     <ScrollView style={styles.cartItems}>
-                        {cartItems.map((item, index) => (
+                        {cartItems.map((item: CartItem, index: number) => (
                             <CartItemComponent
                                 key={index}
                                 item={item}
@@ -264,7 +254,6 @@ const App = () => {
                             </View>
 
                             <ScrollView style={styles.content}>
-                                {/* Recipient Information */}
                                 <View style={styles.row}>
                                     <Text style={styles.label}>Recipient Name</Text>
                                     <TextInput
@@ -293,8 +282,6 @@ const App = () => {
                                         placeholder="Enter address"
                                     />
                                 </View>
-
-                                {/* Delivery Method */}
                                 <View style={styles.row}>
                                     <Text style={styles.label}>Delivery</Text>
                                     <TouchableOpacity
@@ -309,8 +296,6 @@ const App = () => {
                                         <FontAwesome name="angle-right" size={20} color="gray" />
                                     </TouchableOpacity>
                                 </View>
-
-                                {/* Payment Method */}
                                 <View style={styles.row}>
                                     <Text style={styles.label}>Payment</Text>
                                     <TouchableOpacity
@@ -323,8 +308,6 @@ const App = () => {
                                         <FontAwesome name="angle-right" size={20} color="gray" />
                                     </TouchableOpacity>
                                 </View>
-
-                                {/* Promo Code */}
                                 <View style={styles.row}>
                                     <Text style={styles.label}>Promo Code</Text>
                                     <View style={styles.rowEnd}>
@@ -339,8 +322,6 @@ const App = () => {
                                         </TouchableOpacity>
                                     </View>
                                 </View>
-
-                                {/* Total Cost */}
                                 <View style={styles.row}>
                                     <Text style={styles.label}>Total Cost</Text>
                                     <Text style={styles.cost}>${totalCost.toFixed(2)}</Text>
