@@ -12,8 +12,10 @@ import {
     Animated,
 } from 'react-native';
 import { FontAwesome, AntDesign } from '@expo/vector-icons';
-import { useRouter, useRootNavigationState } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useCart } from '../CartContext';
+import Checkbox from 'expo-checkbox';
+
 // Định nghĩa kiểu cho CartItem
 interface CartItem {
     title: string;
@@ -23,18 +25,33 @@ interface CartItem {
     quantity: number;
 }
 
+// Định nghĩa kiểu cho thông tin khách hàng từ ProfileScreen
+interface CustomerInfo {
+    name: string;
+    phone: string;
+    address: string;
+}
+
 // Định nghĩa props cho CartItem component
 interface CartItemProps {
     item: CartItem;
     onRemove: (title: string) => void;
     onUpdateQuantity: (title: string, newQuantity: number) => void;
+    onSelect: (title: string, isSelected: boolean) => void;
+    isSelected: boolean;
 }
 
-const CartItemComponent: React.FC<CartItemProps> = ({ item, onRemove, onUpdateQuantity }) => {
+const CartItemComponent: React.FC<CartItemProps> = ({ item, onRemove, onUpdateQuantity, onSelect, isSelected }) => {
     const price = parseFloat(item.price.replace('$', '')) * item.quantity;
 
     return (
         <View style={styles.cartItem}>
+            <Checkbox
+                value={isSelected}
+                onValueChange={(value) => onSelect(item.title, value)}
+                style={styles.checkbox}
+                color={isSelected ? '#53B175' : undefined}
+            />
             <Image source={item.image} style={styles.image} />
             <View style={styles.itemDetails}>
                 <Text style={styles.itemName}>{item.title}</Text>
@@ -67,11 +84,26 @@ const CartItemComponent: React.FC<CartItemProps> = ({ item, onRemove, onUpdateQu
 };
 
 const App = () => {
-    const { cartItems, setCartItems } = useCart(); // Lấy cartItems và setCartItems từ CartContext
+    const { cartItems, setCartItems } = useCart();
     const [showCheckout, setShowCheckout] = useState(false);
+    const [selectedItems, setSelectedItems] = useState<string[]>(cartItems.map(item => item.title));
     const fadeAnim = useRef(new Animated.Value(0)).current;
     const blurAnim = useRef(new Animated.Value(1)).current;
     const router = useRouter();
+
+    // Mock customer info from ProfileScreen (in a real app, this would come from a context or API)
+    const [customerInfo, setCustomerInfo] = useState<CustomerInfo>({
+        name: 'Afsar Hossen',
+        phone: '+123 456 7890',
+        address: '123 Main Street, City, Country',
+    });
+
+    // State để quản lý thông tin chỉnh sửa trong checkout
+    const [recipientInfo, setRecipientInfo] = useState<CustomerInfo>({
+        name: customerInfo.name,
+        phone: customerInfo.phone,
+        address: customerInfo.address,
+    });
 
     useEffect(() => {
         Animated.parallel([
@@ -95,15 +127,29 @@ const App = () => {
     const [paymentStatus, setPaymentStatus] = useState<'pending' | 'success' | 'failed'>('pending');
     const [showError, setShowError] = useState(false);
 
-    // Tính tổng giá tiền
-    const totalCost = cartItems.reduce((total, item) => {
-        const price = parseFloat(item.price.replace('$', '')) * item.quantity;
-        return total + price;
-    }, 0) - discount;
+    // Handle item selection
+    const handleSelectItem = (title: string, isSelected: boolean) => {
+        setSelectedItems(prev =>
+            isSelected ? [...prev, title] : prev.filter(item => item !== title)
+        );
+    };
+
+    // Handle input change for recipient info
+    const handleRecipientInputChange = (field: keyof CustomerInfo, value: string) => {
+        setRecipientInfo(prev => ({ ...prev, [field]: value }));
+    };
+
+    // Tính tổng giá tiền của các sản phẩm được chọn
+    const totalCost = cartItems
+        .filter(item => selectedItems.includes(item.title))
+        .reduce((total, item) => {
+            const price = parseFloat(item.price.replace('$', '')) * item.quantity;
+            return total + price;
+        }, 0) - discount;
 
     // Xử lý tăng/giảm số lượng
     const handleUpdateQuantity = (title: string, newQuantity: number) => {
-        if (newQuantity < 1) return; // Không cho phép số lượng nhỏ hơn 1
+        if (newQuantity < 1) return;
         setCartItems((prevItems) =>
             prevItems.map((item) =>
                 item.title === title ? { ...item, quantity: newQuantity } : item
@@ -114,6 +160,7 @@ const App = () => {
     // Xử lý xóa sản phẩm
     const handleRemoveItem = (title: string) => {
         setCartItems((prevItems) => prevItems.filter((item) => item.title !== title));
+        setSelectedItems(prev => prev.filter(item => item !== title));
     };
 
     // Xử lý áp dụng mã giảm giá
@@ -129,12 +176,22 @@ const App = () => {
 
     // Xử lý thanh toán
     const handlePayment = () => {
-        const isSuccess = Math.random() > 0.5; // Giả lập thanh toán thành công/thất bại
+        if (selectedItems.length === 0) {
+            Alert.alert('Error', 'Please select at least one item to checkout.');
+            return;
+        }
+        if (!recipientInfo.name || !recipientInfo.phone || !recipientInfo.address) {
+            Alert.alert('Error', 'Please fill in all recipient information.');
+            return;
+        }
+        const isSuccess = Math.random() > 0.5;
         if (isSuccess) {
             setPaymentStatus('success');
-            router.push('/orderaccept'); // Điều hướng tới màn hình thành công
+            setCartItems(prev => prev.filter(item => !selectedItems.includes(item.title)));
+            setSelectedItems([]);
+            router.push('/orderaccept');
         } else {
-            setPaymentStatus('failed'); // Hiển thị màn hình thất bại
+            setPaymentStatus('failed');
             setShowError(true);
         }
     };
@@ -163,6 +220,8 @@ const App = () => {
                                 item={item}
                                 onRemove={handleRemoveItem}
                                 onUpdateQuantity={handleUpdateQuantity}
+                                onSelect={handleSelectItem}
+                                isSelected={selectedItems.includes(item.title)}
                             />
                         ))}
                     </ScrollView>
@@ -192,6 +251,37 @@ const App = () => {
                             </View>
 
                             <ScrollView style={styles.content}>
+                                {/* Recipient Information */}
+                                <View style={styles.row}>
+                                    <Text style={styles.label}>Recipient Name</Text>
+                                    <TextInput
+                                        style={styles.input}
+                                        value={recipientInfo.name}
+                                        onChangeText={(text) => handleRecipientInputChange('name', text)}
+                                        placeholder="Enter recipient name"
+                                    />
+                                </View>
+                                <View style={styles.row}>
+                                    <Text style={styles.label}>Phone Number</Text>
+                                    <TextInput
+                                        style={styles.input}
+                                        value={recipientInfo.phone}
+                                        onChangeText={(text) => handleRecipientInputChange('phone', text)}
+                                        placeholder="Enter phone number"
+                                        keyboardType="phone-pad"
+                                    />
+                                </View>
+                                <View style={styles.row}>
+                                    <Text style={styles.label}>Address</Text>
+                                    <TextInput
+                                        style={styles.input}
+                                        value={recipientInfo.address}
+                                        onChangeText={(text) => handleRecipientInputChange('address', text)}
+                                        placeholder="Enter address"
+                                    />
+                                </View>
+
+                                {/* Delivery Method */}
                                 <View style={styles.row}>
                                     <Text style={styles.label}>Delivery</Text>
                                     <TouchableOpacity
@@ -207,6 +297,7 @@ const App = () => {
                                     </TouchableOpacity>
                                 </View>
 
+                                {/* Payment Method */}
                                 <View style={styles.row}>
                                     <Text style={styles.label}>Payment</Text>
                                     <TouchableOpacity
@@ -220,6 +311,7 @@ const App = () => {
                                     </TouchableOpacity>
                                 </View>
 
+                                {/* Promo Code */}
                                 <View style={styles.row}>
                                     <Text style={styles.label}>Promo Code</Text>
                                     <View style={styles.rowEnd}>
@@ -235,10 +327,10 @@ const App = () => {
                                     </View>
                                 </View>
 
+                                {/* Total Cost */}
                                 <View style={styles.row}>
                                     <Text style={styles.label}>Total Cost</Text>
                                     <Text style={styles.cost}>${totalCost.toFixed(2)}</Text>
-                                    <FontAwesome name="angle-right" size={20} color="gray" />
                                 </View>
                             </ScrollView>
 
@@ -303,7 +395,7 @@ const styles = StyleSheet.create({
     imageIcon: {
         width: 130,
         height: 120,
-        marginLeft: 100
+        marginLeft: 100,
     },
     title: {
         fontSize: 24,
@@ -323,7 +415,7 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         fontSize: 16,
         marginTop: 16,
-        textAlign: 'center'
+        textAlign: 'center',
     },
     closeIconContainer: {
         alignSelf: 'flex-end',
@@ -332,9 +424,7 @@ const styles = StyleSheet.create({
     cost: {
         color: '#181725',
         fontSize: 16,
-        marginRight: -130
     },
-
     content: {
         marginBottom: 20,
     },
@@ -350,20 +440,21 @@ const styles = StyleSheet.create({
         elevation: 5,
     },
     deleteButton: {
-        padding: 8, // Khoảng cách giữa nút X và giá
+        padding: 8,
     },
     myCart: { flex: 1 },
     closeprice: {
-        flexDirection: 'column', // Sắp xếp theo chiều dọc
-        alignItems: 'center', // Căn giữa theo trục ngang
-        justifyContent: 'space-between', // Dãn cách đều
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'space-between',
         height: 80,
-    }, // C
+    },
     container: { flex: 1, backgroundColor: 'white' },
     header: { padding: 16, borderBottomWidth: 1, borderBottomColor: '#e0e0e0', alignItems: 'center' },
     headerText: { fontSize: 20, fontWeight: 'bold' },
     cartItems: { padding: 16 },
     cartItem: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: '#e0e0e0' },
+    checkbox: { marginRight: 10 },
     image: { width: 64, height: 64 },
     itemDetails: { flex: 1, marginLeft: 16 },
     itemName: { fontSize: 16, fontWeight: 'bold', marginBottom: 3 },
@@ -374,38 +465,24 @@ const styles = StyleSheet.create({
     quantityText: { marginHorizontal: 8 },
     price: { fontSize: 16, fontWeight: 'bold' },
     checkoutButton: {
-        width: "80%",
+        width: '80%',
         padding: 20,
-        backgroundColor: "#53B175",
+        backgroundColor: '#53B175',
         borderRadius: 25,
         flexDirection: 'row',
         justifyContent: 'space-between',
         marginBottom: 20,
-        marginLeft: 38
+        marginLeft: 38,
     },
     checkoutButtonText: { color: 'white', fontSize: 16, paddingLeft: 45 },
-    checkoutPrice: { backgroundColor: 'darkgreen', paddingVertical: 4, paddingHorizontal: 8, borderRadius: 4, width: "30%" },
+    checkoutPrice: { backgroundColor: 'darkgreen', paddingVertical: 4, paddingHorizontal: 8, borderRadius: 4, width: '30%' },
     checkoutPriceText: { color: 'white' },
-
-    // ✅ Style cho màn hình Checkout
     overlay: {
-        ...StyleSheet.absoluteFillObject, // Chồng lên toàn bộ màn hình
-        backgroundColor: 'rgba(0,0,0,0.5)', // Làm mờ nền
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: 'rgba(0,0,0,0.5)',
         justifyContent: 'center',
         alignItems: 'center',
     },
-    checkoutContainer: {
-        width: '80%',
-        backgroundColor: 'white',
-        padding: 20,
-        borderRadius: 20,
-        alignItems: 'center',
-    },
-    checkoutTitle: { fontSize: 22, fontWeight: 'bold', marginBottom: 10 },
-    checkoutText: { fontSize: 18, marginBottom: 20 },
-    confirmButton: { backgroundColor: '#53B175', padding: 15, borderRadius: 10, width: '100%', alignItems: 'center' },
-    confirmButtonText: { color: 'white', fontSize: 16, fontWeight: 'bold' },
-    backButton: { position: 'absolute', left: 15, top: 15 },
     row: {
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -417,6 +494,7 @@ const styles = StyleSheet.create({
     label: {
         color: '#6b7280',
         fontSize: 16,
+        width: 120, // Ensure labels have consistent width
     },
     rowEnd: {
         flexDirection: 'row',
@@ -433,8 +511,8 @@ const styles = StyleSheet.create({
         paddingVertical: 5,
         borderRadius: 5,
         fontSize: 14,
-        width: 120,
-        marginRight: 10,
+        flex: 1, // Take remaining space
+        marginLeft: 10,
     },
     applyText: {
         color: '#10b981',
@@ -451,16 +529,6 @@ const styles = StyleSheet.create({
     buttonText: {
         color: 'white',
         fontSize: 16,
-        fontWeight: '600',
-    },
-    footerText: {
-        fontSize: 12,
-        color: '#6b7280',
-        textAlign: 'center',
-        marginTop: 10,
-    },
-    footerLink: {
-        color: 'black',
         fontWeight: '600',
     },
 });
