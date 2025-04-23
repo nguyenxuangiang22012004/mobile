@@ -15,6 +15,7 @@ import { FontAwesome, AntDesign } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useCart } from '../CartContext';
 import Checkbox from 'expo-checkbox';
+import { useOrder } from './OrderContext';
 
 // Định nghĩa kiểu cho CartItem
 interface CartItem {
@@ -85,6 +86,7 @@ const CartItemComponent: React.FC<CartItemProps> = ({ item, onRemove, onUpdateQu
 
 const App = () => {
     const { cartItems, setCartItems } = useCart();
+    const { addOrder } = useOrder();
     const [showCheckout, setShowCheckout] = useState(false);
     const [selectedItems, setSelectedItems] = useState<string[]>(cartItems.map(item => item.title));
     const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -186,6 +188,17 @@ const App = () => {
         }
         const isSuccess = Math.random() > 0.5;
         if (isSuccess) {
+            const newOrder = {
+                id: `ORDER-${Date.now()}`,
+                items: cartItems.filter(item => selectedItems.includes(item.title)),
+                placementDate: new Date(),
+                status: 'Preparing Order' as 'Preparing Order',
+                recipientInfo: { ...recipientInfo },
+                deliveryMethod,
+                paymentMethod,
+                totalCost,
+            };
+            addOrder(newOrder);
             setPaymentStatus('success');
             setCartItems(prev => prev.filter(item => !selectedItems.includes(item.title)));
             setSelectedItems([]);
@@ -494,7 +507,7 @@ const styles = StyleSheet.create({
     label: {
         color: '#6b7280',
         fontSize: 16,
-        width: 120, // Ensure labels have consistent width
+        width: 120,
     },
     rowEnd: {
         flexDirection: 'row',
@@ -511,7 +524,7 @@ const styles = StyleSheet.create({
         paddingVertical: 5,
         borderRadius: 5,
         fontSize: 14,
-        flex: 1, // Take remaining space
+        flex: 1,
         marginLeft: 10,
     },
     applyText: {

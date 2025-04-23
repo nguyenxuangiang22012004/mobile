@@ -4,7 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import SplashScreen from '@/components/SplashScreen';
 import { CartProvider } from './CartContext';
 import { FavouriteProvider } from './FavouriteContext';
-
+import { OrderProvider } from '../app/(tabs)/OrderContext';
 export default function Layout() {
   const [isFirstLaunch, setIsFirstLaunch] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
@@ -44,16 +44,19 @@ export default function Layout() {
   return (
     <CartProvider>
       <FavouriteProvider>
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="index" />
-          <Stack.Screen name="signin" />
-          <Stack.Screen name="signup" />
-          <Stack.Screen name="productdetail" />
-          <Stack.Screen name="category" />
-          <Stack.Screen name="mycart" options={{ title: 'My Cart' }} />
-          <Stack.Screen name="forgot-password" />
-          <Stack.Screen name="onboarding" />
-        </Stack>
+        <OrderProvider>
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="index" />
+            <Stack.Screen name="signin" />
+            <Stack.Screen name="signup" />
+            <Stack.Screen name="productdetail" />
+            <Stack.Screen name="category" />
+            <Stack.Screen name="OrderTracking" />
+            <Stack.Screen name="mycart" options={{ title: 'My Cart' }} />
+            <Stack.Screen name="forgot-password" />
+            <Stack.Screen name="onboarding" />
+          </Stack>
+        </OrderProvider>
       </FavouriteProvider>
     </CartProvider>
   );

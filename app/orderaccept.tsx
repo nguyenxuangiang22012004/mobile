@@ -17,7 +17,7 @@ export default function App() {
             <Text></Text>
 
             {/* Nút Track Order */}
-            <TouchableOpacity style={styles.button} onPress={() => router.push('/mycart')}>
+            <TouchableOpacity style={styles.button} onPress={() => router.push('/(tabs)/OrderTracking')}>
                 <Text style={styles.buttonText}>Track Order</Text>
             </TouchableOpacity>
 
