@@ -26,6 +26,7 @@ interface Order {
 interface OrderContextType {
     orders: Order[];
     addOrder: (order: Order) => void;
+    removeOrder: (orderId: string) => void;
 }
 
 const OrderContext = createContext<OrderContextType | undefined>(undefined);
@@ -37,8 +38,12 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setOrders(prev => [...prev, order]);
     };
 
+    const removeOrder = (orderId: string) => {
+        setOrders(prev => prev.filter(order => order.id !== orderId));
+    };
+
     return (
-        <OrderContext.Provider value={{ orders, addOrder }}>
+        <OrderContext.Provider value={{ orders, addOrder, removeOrder }}>
             {children}
         </OrderContext.Provider>
     );

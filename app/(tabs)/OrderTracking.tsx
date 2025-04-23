@@ -6,6 +6,7 @@ import {
     ScrollView,
     TouchableOpacity,
     Image,
+    Alert,
 } from 'react-native';
 import { FontAwesome, AntDesign } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -49,7 +50,7 @@ const getExpectedDeliveryDate = (placementDate: Date): string => {
 };
 
 // Component hiển thị thông tin từng đơn hàng
-const OrderItem: React.FC<{ order: Order }> = ({ order }) => {
+const OrderItem: React.FC<{ order: Order; onCancel: (orderId: string) => void }> = ({ order, onCancel }) => {
     const totalCost = order.totalCost || order.items.reduce((total, item) => {
         const price = parseFloat(item.price.replace('$', '')) * item.quantity;
         return total + price;
@@ -97,13 +98,40 @@ const OrderItem: React.FC<{ order: Order }> = ({ order }) => {
                     </View>
                 ))}
             </View>
+            {order.status === 'Preparing Order' && (
+                <TouchableOpacity
+                    style={styles.cancelButton}
+                    onPress={() => onCancel(order.id)}
+                >
+                    <Text style={styles.cancelButtonText}>Cancel Order</Text>
+                </TouchableOpacity>
+            )}
         </View>
     );
 };
 
 const OrderTrackingScreen: React.FC = () => {
     const router = useRouter();
-    const { orders } = useOrder();
+    const { orders, removeOrder } = useOrder();
+
+    const handleCancelOrder = (orderId: string) => {
+        Alert.alert(
+            'Cancel Order',
+            'Are you sure you want to cancel this order?',
+            [
+                { text: 'No', style: 'cancel' },
+                {
+                    text: 'Yes',
+                    style: 'destructive',
+                    onPress: () => {
+                        removeOrder(orderId);
+                        Alert.alert('Success', 'Order has been canceled.');
+                    },
+                },
+            ],
+            { cancelable: true }
+        );
+    };
 
     return (
         <View style={styles.container}>
@@ -114,7 +142,7 @@ const OrderTrackingScreen: React.FC = () => {
             ) : (
                 <ScrollView style={styles.orderList}>
                     {orders.map(order => (
-                        <OrderItem key={order.id} order={order} />
+                        <OrderItem key={order.id} order={order} onCancel={handleCancelOrder} />
                     ))}
                 </ScrollView>
             )}
@@ -210,6 +238,7 @@ const styles = StyleSheet.create({
         borderTopWidth: 1,
         borderTopColor: '#e0e0e0',
         paddingTop: 12,
+        marginBottom: 12,
     },
     itemRow: {
         flexDirection: 'row',
@@ -237,6 +266,17 @@ const styles = StyleSheet.create({
     itemPrice: {
         fontSize: 12,
         color: '#181725',
+        fontWeight: '600',
+    },
+    cancelButton: {
+        backgroundColor: '#FF4D4F',
+        padding: 12,
+        borderRadius: 8,
+        alignItems: 'center',
+    },
+    cancelButtonText: {
+        color: 'white',
+        fontSize: 16,
         fontWeight: '600',
     },
 });
