@@ -283,20 +283,6 @@ const App = () => {
                                     />
                                 </View>
                                 <View style={styles.row}>
-                                    <Text style={styles.label}>Delivery</Text>
-                                    <TouchableOpacity
-                                        style={styles.rowEnd}
-                                        onPress={() =>
-                                            setDeliveryMethod(
-                                                deliveryMethod === 'Standard Delivery' ? 'Express Delivery' : 'Standard Delivery'
-                                            )
-                                        }
-                                    >
-                                        <Text style={styles.value}>{deliveryMethod}</Text>
-                                        <FontAwesome name="angle-right" size={20} color="gray" />
-                                    </TouchableOpacity>
-                                </View>
-                                <View style={styles.row}>
                                     <Text style={styles.label}>Payment</Text>
                                     <TouchableOpacity
                                         style={styles.rowEnd}
