@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
     View,
     Text,
@@ -7,6 +7,8 @@ import {
     TouchableOpacity,
     Image,
     Alert,
+    Animated,
+    TouchableWithoutFeedback,
 } from 'react-native';
 import { FontAwesome, AntDesign } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -49,12 +51,36 @@ const getExpectedDeliveryDate = (placementDate: Date): string => {
     });
 };
 
+// Component hiển thị sản phẩm trong overlay
+const OrderItemDetail: React.FC<{ item: CartItem }> = ({ item }) => {
+    const price = parseFloat(item.price.replace('$', '')) * item.quantity;
+    return (
+        <View style={styles.detailItem}>
+            <Image source={item.image} style={styles.detailImage} />
+            <View style={styles.detailInfo}>
+                <Text style={styles.detailName}>{item.title}</Text>
+                <Text style={styles.detailSubtitle}>{item.subtitle}</Text>
+                <Text style={styles.detailPrice}>
+                    ${price.toFixed(2)} (x{item.quantity})
+                </Text>
+            </View>
+        </View>
+    );
+};
+
 // Component hiển thị thông tin từng đơn hàng
-const OrderItem: React.FC<{ order: Order; onCancel?: (orderId: string) => void }> = ({ order, onCancel }) => {
+const OrderItem: React.FC<{
+    order: Order;
+    onCancel?: (orderId: string) => void;
+    onShowDetails: (order: Order) => void;
+}> = ({ order, onCancel, onShowDetails }) => {
     const totalCost = order.totalCost || order.items.reduce((total: number, item: CartItem) => {
         const price = parseFloat(item.price.replace('$', '')) * item.quantity;
         return total + price;
     }, 0);
+
+    // Lấy sản phẩm đầu tiên làm đại diện
+    const representativeItem = order.items[0];
 
     return (
         <View style={styles.orderItem}>
@@ -85,18 +111,23 @@ const OrderItem: React.FC<{ order: Order; onCancel?: (orderId: string) => void }
                 <Text style={styles.orderTotal}>Total: ${totalCost.toFixed(2)}</Text>
             </View>
             <View style={styles.orderItems}>
-                {order.items.map((item: CartItem, index: number) => (
-                    <View key={index} style={styles.itemRow}>
-                        <Image source={item.image} style={styles.itemImage} />
+                <TouchableOpacity onPress={() => onShowDetails(order)}>
+                    <View style={styles.itemRow}>
+                        <Image source={representativeItem.image} style={styles.itemImage} />
                         <View style={styles.itemInfo}>
-                            <Text style={styles.itemName}>{item.title}</Text>
-                            <Text style={styles.itemSubtitle}>{item.subtitle}</Text>
+                            <Text style={styles.itemName}>{representativeItem.title}</Text>
+                            <Text style={styles.itemSubtitle}>{representativeItem.subtitle}</Text>
                             <Text style={styles.itemPrice}>
-                                ${(parseFloat(item.price.replace('$', '')) * item.quantity).toFixed(2)} (x{item.quantity})
+                                ${(parseFloat(representativeItem.price.replace('$', '')) * representativeItem.quantity).toFixed(2)} (x{representativeItem.quantity})
                             </Text>
+                            {order.items.length > 1 && (
+                                <Text style={styles.viewMoreText}>
+                                    +{order.items.length - 1} more items
+                                </Text>
+                            )}
                         </View>
                     </View>
-                ))}
+                </TouchableOpacity>
             </View>
             {order.status === 'Preparing Order' && onCancel && (
                 <TouchableOpacity
@@ -114,6 +145,25 @@ const OrderTrackingScreen: React.FC = () => {
     const router = useRouter();
     const { orders, removeOrder } = useOrder();
     const [activeTab, setActiveTab] = useState<'active' | 'history'>('active');
+    const [showDetails, setShowDetails] = useState(false);
+    const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+    const fadeAnim = useRef(new Animated.Value(0)).current;
+    const blurAnim = useRef(new Animated.Value(1)).current;
+
+    React.useEffect(() => {
+        Animated.parallel([
+            Animated.timing(fadeAnim, {
+                toValue: showDetails ? 1 : 0,
+                duration: 300,
+                useNativeDriver: true,
+            }),
+            Animated.timing(blurAnim, {
+                toValue: showDetails ? 0.3 : 1,
+                duration: 300,
+                useNativeDriver: true,
+            }),
+        ]).start();
+    }, [showDetails]);
 
     const activeOrders = orders.filter((order: Order) =>
         ['Preparing Order', 'Order Shipped'].includes(order.status)
@@ -141,50 +191,99 @@ const OrderTrackingScreen: React.FC = () => {
         );
     };
 
+    const handleShowDetails = (order: Order) => {
+        setSelectedOrder(order);
+        setShowDetails(true);
+    };
+
     return (
         <View style={styles.container}>
-            <View style={styles.tabContainer}>
-                <TouchableOpacity
-                    style={[styles.tabButton, activeTab === 'active' && styles.tabButtonActive]}
-                    onPress={() => setActiveTab('active')}
-                >
-                    <Text style={[styles.tabText, activeTab === 'active' && styles.tabTextActive]}>
-                        Active Orders
-                    </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                    style={[styles.tabButton, activeTab === 'history' && styles.tabButtonActive]}
-                    onPress={() => setActiveTab('history')}
-                >
-                    <Text style={[styles.tabText, activeTab === 'history' && styles.tabTextActive]}>
-                        Purchase History
-                    </Text>
-                </TouchableOpacity>
-            </View>
-            {activeTab === 'active' ? (
-                activeOrders.length === 0 ? (
-                    <View style={styles.emptyOrders}>
-                        <Text style={styles.emptyOrdersText}>No active orders found</Text>
-                    </View>
+            <Animated.View style={[styles.mainContent, { opacity: blurAnim }]}>
+                <View style={styles.tabContainer}>
+                    <TouchableOpacity
+                        style={[styles.tabButton, activeTab === 'active' && styles.tabButtonActive]}
+                        onPress={() => setActiveTab('active')}
+                    >
+                        <Text style={[styles.tabText, activeTab === 'active' && styles.tabTextActive]}>
+                            Active Orders
+                        </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={[styles.tabButton, activeTab === 'history' && styles.tabButtonActive]}
+                        onPress={() => setActiveTab('history')}
+                    >
+                        <Text style={[styles.tabText, activeTab === 'history' && styles.tabTextActive]}>
+                            Purchase History
+                        </Text>
+                    </TouchableOpacity>
+                </View>
+                {activeTab === 'active' ? (
+                    activeOrders.length === 0 ? (
+                        <View style={styles.emptyOrders}>
+                            <Text style={styles.emptyOrdersText}>No active orders found</Text>
+                        </View>
+                    ) : (
+                        <ScrollView style={styles.orderList}>
+                            {activeOrders.map((order: Order) => (
+                                <OrderItem
+                                    key={order.id}
+                                    order={order}
+                                    onCancel={handleCancelOrder}
+                                    onShowDetails={handleShowDetails}
+                                />
+                            ))}
+                        </ScrollView>
+                    )
                 ) : (
-                    <ScrollView style={styles.orderList}>
-                        {activeOrders.map((order: Order) => (
-                            <OrderItem key={order.id} order={order} onCancel={handleCancelOrder} />
-                        ))}
-                    </ScrollView>
-                )
-            ) : (
-                historyOrders.length === 0 ? (
-                    <View style={styles.emptyOrders}>
-                        <Text style={styles.emptyOrdersText}>No purchase history found</Text>
-                    </View>
-                ) : (
-                    <ScrollView style={styles.orderList}>
-                        {historyOrders.map((order: Order) => (
-                            <OrderItem key={order.id} order={order} />
-                        ))}
-                    </ScrollView>
-                )
+                    historyOrders.length === 0 ? (
+                        <View style={styles.emptyOrders}>
+                            <Text style={styles.emptyOrdersText}>No purchase history found</Text>
+                        </View>
+                    ) : (
+                        <ScrollView style={styles.orderList}>
+                            {historyOrders.map((order: Order) => (
+                                <OrderItem
+                                    key={order.id}
+                                    order={order}
+                                    onShowDetails={handleShowDetails}
+                                />
+                            ))}
+                        </ScrollView>
+                    )
+                )}
+            </Animated.View>
+
+            {showDetails && selectedOrder && (
+                <TouchableWithoutFeedback
+                    onPress={(event) => {
+                        if (event.target === event.currentTarget) {
+                            setShowDetails(false);
+                            setSelectedOrder(null);
+                        }
+                    }}
+                >
+                    <Animated.View style={[styles.overlay, { opacity: fadeAnim }]}>
+                        <View style={styles.card}>
+                            <View style={styles.header}>
+                                <Text style={styles.headerText}>Order #{selectedOrder.id} Items</Text>
+                            </View>
+                            <ScrollView style={styles.detailContent}>
+                                {selectedOrder.items.map((item: CartItem, index: number) => (
+                                    <OrderItemDetail key={index} item={item} />
+                                ))}
+                            </ScrollView>
+                            <TouchableOpacity
+                                style={styles.closeButton}
+                                onPress={() => {
+                                    setShowDetails(false);
+                                    setSelectedOrder(null);
+                                }}
+                            >
+                                <Text style={styles.closeButtonText}>Close</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </Animated.View>
+                </TouchableWithoutFeedback>
             )}
         </View>
     );
@@ -195,21 +294,21 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: 'white',
     },
+    mainContent: {
+        flex: 1,
+    },
     header: {
         padding: 16,
         borderBottomWidth: 1,
         borderBottomColor: '#e0e0e0',
         flexDirection: 'row',
-        justifyContent: 'space-between',
+        justifyContent: 'center',
         alignItems: 'center',
     },
     headerText: {
         fontSize: 20,
         fontWeight: 'bold',
         color: '#181725',
-    },
-    backButton: {
-        padding: 8,
     },
     tabContainer: {
         flexDirection: 'row',
@@ -332,6 +431,11 @@ const styles = StyleSheet.create({
         color: '#181725',
         fontWeight: '600',
     },
+    viewMoreText: {
+        fontSize: 12,
+        color: '#53B175',
+        marginTop: 4,
+    },
     cancelButton: {
         backgroundColor: '#FF4D4F',
         padding: 12,
@@ -339,6 +443,68 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     cancelButtonText: {
+        color: 'white',
+        fontSize: 16,
+        fontWeight: '600',
+    },
+    overlay: {
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    card: {
+        backgroundColor: 'white',
+        width: 320,
+        borderRadius: 20,
+        padding: 20,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 8,
+        elevation: 5,
+    },
+    detailContent: {
+        maxHeight: 400,
+        marginBottom: 20,
+    },
+    detailItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 10,
+        borderBottomWidth: 1,
+        borderBottomColor: '#e0e0e0',
+    },
+    detailImage: {
+        width: 64,
+        height: 64,
+        borderRadius: 8,
+        marginRight: 12,
+    },
+    detailInfo: {
+        flex: 1,
+    },
+    detailName: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: '#181725',
+    },
+    detailSubtitle: {
+        fontSize: 14,
+        color: '#6B7280',
+    },
+    detailPrice: {
+        fontSize: 14,
+        color: '#181725',
+        fontWeight: '600',
+    },
+    closeButton: {
+        backgroundColor: '#53B175',
+        padding: 15,
+        borderRadius: 10,
+        alignItems: 'center',
+    },
+    closeButtonText: {
         color: 'white',
         fontSize: 16,
         fontWeight: '600',
